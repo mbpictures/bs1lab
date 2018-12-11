@@ -10,3 +10,4 @@ ToDo's:
  * Testen
 
 Näheres unter [Projects](https://github.com/mbpictures/bs1lab/projects)
+Eine Doc zu allen Methoden [hier](https://libfuse.github.io/doxygen/structfuse__operations.html)
