@@ -32,6 +32,13 @@ char [] buffer = new char[sizeof(s)];
 memcpy(&buffer, &s, sizeof(s));
 ```
 
+Gemountete Datenträger werden in /etc/fstab eingetragen. Diese Datei wird immer beim Boot gelesen und bei Ausführung des *mount* Command. Typischer Eintrag:
+```
+# device-spec   mount-point     fs-type      options                                          dump pass
+# mounting tmpfs
+tmpfs           /mnt/tmpfschk   tmpfs        defaults                                           0 0
+```
+
 ## Interfaces
 ### Superblock
  * **int_16 findFreeBlock(void)**<br>
