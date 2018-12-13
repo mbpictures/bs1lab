@@ -57,15 +57,15 @@ Serialisiere das gesamte Entry-Array sequentiell in den Buffer, welcher anschlie
  * **void deserialize(const char&ast; buffer)**<br>
 Lese den Buffer ein und schreibe die einzelnen Elemente als Struct-Array zurück in das Entry-Array.
 
-##Aufgabe 1 - Read Only
-##Forderungen
+## Aufgabe 1 - Read Only
+## Forderungen
 * Dateien sollen die üblichen Attribute unterstützen (Name, Größe, Rechte, Zeitstempel etc...)
 * Es gibt nur ein Verzeichnis: Das Root-Verzeichnis
 * Einbindung in den Verzeichnisbaum des Betriebssystems (frei wählbarer Ort)
 * Initiales Kopieren von Daten beim Erstellen des Dateisystems
 * Lesen der initial kopierten Daten
 
-##Hinweise
+## Hinweise
 * Keine Unterverzeichnisse
 * Beim Kopieren von Daten werden Pfadnamen entfernt
 * Bei Duplikaten (gleicher Name) soll ein Fehler geworfen werden
