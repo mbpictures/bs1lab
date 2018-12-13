@@ -68,7 +68,7 @@ Lese den Buffer ein und schreibe die einzelnen Elemente als Struct-Array zurück
 ## Forderungen
 * Dateien sollen die üblichen Attribute unterstützen (Name, Größe, Rechte, Zeitstempel etc...)
 * Es gibt nur ein Verzeichnis: Das Root-Verzeichnis
-* Einbindung in den Verzeichnisbaum des Betriebssystems (frei wählbarer Ort)
+* Einbindung in den Verzeichnisbaum des Betriebssystems (/mnt/)
 * Initiales Kopieren von Daten beim Erstellen des Dateisystems
 * Lesen der initial kopierten Daten
 
