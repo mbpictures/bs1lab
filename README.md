@@ -36,11 +36,11 @@ memcpy(&buffer, &s, sizeof(s));
 ### Superblock
  * **int_16 findFreeBlock(void)**<br>
 Finde den nächsten freien Block in der DMap und gib die Adresse dessen zurück.
- * **int_16 findNextBlock(int_16 adress)**<br>
+ * **int_16 findNextBlock(int_16 address)**<br>
 Hat der Angegebene Block einen nachfolge Block? Falls ja gib die Adresse zurück, falls nein gib -1 zurück.
- * **void setNextBlock(int_16 blockAdress, int_16 nextBlockAdress)**<br>
+ * **void setNextBlock(int_16 blockAddress, int_16 nextBlockAddress)**<br>
 Setzt den nächsten Block eines Blocks. Um den nachfolgenden Block zu entfernen muss nextBlockAdress auf -1 gesetzt wird.
- * **void markBlock(int_16 adress, boolean status)**<br>
+ * **void markBlock(int_16 address, boolean status)**<br>
 Markiere Block als belegt (status = false) oder frei (status = true)
  * **void serialize(const char&ast; buffer)**<br>
 Serialisiere den gesamten Superblock (bestehend aus DMAP, FAT und ggf. weiteren Attributen) sequentiell in den Buffer, welcher anschließend geschrieben werden kann.
