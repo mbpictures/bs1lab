@@ -8,6 +8,7 @@ Ein Laufwerk wird mittels "Image" (in der BlockDevice-Klasse) simuliert.
  * Image mit MyFS formatieren und mounten
  * Methoden zum Lesen/Schreiben (im Code mit "TODO" markiert) implementieren
  * Testen
+ * Ausführlich Dokumentieren
 
 Näheres unter [Projects](https://github.com/mbpictures/bs1lab/projects). <br>
 Eine Doc zu allen Methoden [hier](https://libfuse.github.io/doxygen/structfuse__operations.html)
@@ -55,3 +56,17 @@ Suche und entferne den entry aus dem Array mit dem filename = path, dann return 
 Serialisiere das gesamte Entry-Array sequentiell in den Buffer, welcher anschließend geschrieben werden kann.
  * **void deserialize(const char&ast; buffer)**<br>
 Lese den Buffer ein und schreibe die einzelnen Elemente als Struct-Array zurück in das Entry-Array.
+
+##Aufgabe 1 - Read Only
+##Forderungen
+* Dateien sollen die üblichen Attribute unterstützen (Name, Größe, Rechte, Zeitstempel etc...)
+* Es gibt nur ein Verzeichnis: Das Root-Verzeichnis
+* Einbindung in den Verzeichnisbaum des Betriebssystems (frei wählbarer Ort)
+* Initiales Kopieren von Daten beim Erstellen des Dateisystems
+* Lesen der initial kopierten Daten
+
+##Hinweise
+* Keine Unterverzeichnisse
+* Beim Kopieren von Daten werden Pfadnamen entfernt
+* Bei Duplikaten (gleicher Name) soll ein Fehler geworfen werden
+* Zugriffsrechte sind immer Read-Only (444)
