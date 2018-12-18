@@ -8,24 +8,24 @@ Ein Laufwerk wird mittels "Image" (in der BlockDevice-Klasse) simuliert.
  * Image mit MyFS formatieren und mounten
  * Methoden zum Lesen/Schreiben (im Code mit "TODO" markiert) implementieren
  * Testen
- * Ausführlich Dokumentieren
+ * Ausführlich dokumentieren
 
 Näheres unter [Projects](https://github.com/mbpictures/bs1lab/projects). <br>
 Eine Doc zu allen Methoden [hier](https://libfuse.github.io/doxygen/structfuse__operations.html)
 
 ## Entwurf
-Um das Lesen und schreiben möglichst abstrakt zu handhaben erstellen wir zunächst einige Klassen und Structs.
-Die Klasse Superblock beeinhaltet informationen über das Dateisystem (Anzahl an Blöcke (a 512 Byte), DMAP, FAT und die Adresse des ersten Datenblocks). Die FAT ist ein Array entries[], welches vom Typ u_int_16 ist. Der Array-Eintrag ist die Adresse des nächsten Speicherblocks. Gibt es keinen nächsten Speicherblock ist entries[i] 0. Root-Verzeichnis ist die Klasse, in der alle Dateien und die dazugehörigen Informationen gespeichert: Dateiname (8 Byte), Dateigröße (2 Byte (FAT16)), BenutzerID (1Byte) GruppenID (1 Byte), Zugriffsrechte (3x4 Bit),Zeitstempel (letzter Zugriff (atime), letzte Änderung (mtime), letzte Statusänderung (ctime): 3x4Byte) und den Zeiger auf den ersten Block (2 Byte für 65.536 Blöcke = 32 MiB). Das macht 18 Byte pro Eintrag, 131072 Byte für alle Einträge, was schon 256 Blöcke entspricht.
+Um das Lesen und schreiben möglichst abstrakt zu handhaben erstellen wir zunächst einige Klassen und Strukturen.
+Die Klasse Superblock beeinhaltet Informationen über das Dateisystem (Anzahl an Blöcke (a 512 Byte), DMAP, FAT und die Adresse des ersten Datenblocks). Die FAT ist ein Array entries[], welches vom Typ u_int_16 ist. Der Array-Eintrag ist die Adresse des nächsten Speicherblocks. Gibt es keinen nächsten Speicherblock ist entries[i] 0. Root-Verzeichnis ist die Klasse, in der alle Dateien und die dazugehörigen Informationen gespeichert: Dateiname (8 Byte), Dateigröße (2 Byte (FAT16)), BenutzerID (1Byte) GruppenID (1 Byte), Zugriffsrechte (3x4 Bit),Zeitstempel (letzter Zugriff (atime), letzte Änderung (mtime), letzte Statusänderung (ctime): 3x4Byte) und den Zeiger auf den ersten Block (2 Byte für 65.536 Blöcke = 32 MiB). Das macht 18 Byte pro Eintrag, 131072 Byte für alle Einträge, was schon 256 Blöcke entspricht.
 
 ## Definitionen
-DMAP ist ein boolean-Array. Freier Block = true, belegter Block = false.<br>
-FAT ist ein int_16-Array. Kein Nachfolge-Block = 0, Nachfolge-Block = Adresse.<br>
+DMAP ist ein Boolean-Array. Freier Block = true, belegter Block = false.<br>
+FAT ist ein u_int_16-Array. Kein Nachfolge-Block = 0, Nachfolge-Block = Adresse.<br>
 Root-Verzeichnis ist Array aus Structs, welcher alle Informationen speichert.<br>
-Fehler in Methode aufgetreten = 1, kein fehler = 0.<br>
-Der SBlock und das RootDirectory haben eine bestimmte größe, sodass die Position des RootDirectorys und der Daten unverändert bleibt.
+Fehler in Methode aufgetreten = 1, kein Fehler = 0.<br>
+Der SBlock und das RootDirectory haben eine bestimmte Größe, sodass die Position des Root-Directorys und der Daten unverändert bleibt.
 
 ## Überlegungen
-Attribute des SBlocks werden als struct gespeichert. Beispielcode für die serialisierung
+Attribute des SBlocks werden als Struct gespeichert. Beispielcode für die Serialisierung
 ```c++
 MyStruct s;
 char [] buffer = new char[sizeof(s)];
