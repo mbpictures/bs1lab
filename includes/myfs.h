@@ -15,6 +15,7 @@
 
 #include "blockdevice.h"
 #include "myfs-structs.h"
+#include "RootDirectory.h"
 
 class MyFS {
 private:
@@ -25,6 +26,7 @@ public:
     static MyFS *Instance();
     
     // TODO: Add attributes of your file system here
+    RootDirectory *rd;
     
     MyFS();
     ~MyFS();

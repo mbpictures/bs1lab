@@ -30,6 +30,7 @@ MyFS* MyFS::Instance() {
 }
 
 MyFS::MyFS() {
+	this->rd = new RootDirectory;
     this->logFile= stderr;
 }
 
