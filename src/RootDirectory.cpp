@@ -1,5 +1,4 @@
 #include "RootDirectory.h"
-#include <iostream>
 
 RootDirectory::RootDirectory() {
 	this->listDeserialized = false;
