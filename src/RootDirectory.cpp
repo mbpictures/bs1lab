@@ -68,6 +68,19 @@ FileEntry RootDirectory::getEntry(int index){
 	}
 }
 
+int RootDirectory::removeEntry(const char* path){
+	FileEntry *empty = new FileEntry;
+	empty->firstBlock = 0;
+	empty->filename[0] = '\0';
+	for(int i = 0; i < DATA_BLOCKS; i++) {
+		if(strcmp(this->fileList[i].filename, path) == 0){
+			this->fileList[i] = *empty;
+			return 1;
+		}
+	}
+	return -(ENOENT);
+}
+
 void RootDirectory::serialize(){
 	return;
 }
