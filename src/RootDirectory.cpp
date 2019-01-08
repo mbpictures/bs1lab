@@ -1,4 +1,5 @@
 #include "RootDirectory.h"
+#include <iostream>
 
 RootDirectory::RootDirectory() {
 	this->listDeserialized = false;
@@ -6,16 +7,17 @@ RootDirectory::RootDirectory() {
 }
 
 RootDirectory::~RootDirectory() {
-	this->serialize();
+	//this->serialize();
 }
 
 int RootDirectory::addEntry(const char* path, uint16_t firstblock, uint32_t sizeOfFile, mode_t mode, uint8_t uid, uint8_t gid) {
 	FileEntry *newEntry = new FileEntry;
 	//Remove Path information of filepath
 	char *escapedpath = strrchr(strdup(path), '/');
+	escapedpath++;
 	
 	//check if file already exists
-	for (int i = 0; i < DATA_BLOCKS; i++) {
+	for (int i = 0; i < NUM_DIR_ENTRIES; i++) {
 		if (strcmp(this->fileList[i].filename, escapedpath) == 0) {
 			return -(EEXIST);
 		}
@@ -36,10 +38,10 @@ int RootDirectory::addEntry(const char* path, uint16_t firstblock, uint32_t size
 	newEntry->sizeOfFile = sizeOfFile;
 
 	//save entry in list
-	for (int i = 0; i < DATA_BLOCKS; i++) {
+	for (int i = 0; i < NUM_DIR_ENTRIES; i++) {
 		if (this->fileList[i].firstBlock == 0) {
 			this->fileList[i] = *newEntry;
-			i = DATA_BLOCKS;
+			i = NUM_DIR_ENTRIES +1;
 			return 1;
 		}
 	}
@@ -49,7 +51,7 @@ int RootDirectory::addEntry(const char* path, uint16_t firstblock, uint32_t size
 }
 
 int RootDirectory::searchEntry(const char* path, uint8_t uid, uint8_t gid){
-	for(int i = 0; i < DATA_BLOCKS; i++) {
+	for(int i = 0; i < NUM_DIR_ENTRIES; i++) {
 		if(strcmp(this->fileList[i].filename, path) == 0){
 			return i;
 		}
@@ -71,7 +73,7 @@ int RootDirectory::removeEntry(const char* path){
 	FileEntry *empty = new FileEntry;
 	empty->firstBlock = 0;
 	empty->filename[0] = '\0';
-	for(int i = 0; i < DATA_BLOCKS; i++) {
+	for(int i = 0; i < NUM_DIR_ENTRIES; i++) {
 		if(strcmp(this->fileList[i].filename, path) == 0){
 			this->fileList[i] = *empty;
 			return 1;
@@ -80,7 +82,7 @@ int RootDirectory::removeEntry(const char* path){
 	return -(ENOENT);
 }
 
-void RootDirectory::serialize(){
+void RootDirectory::serialize(char *buffer){
 	return;
 }
 

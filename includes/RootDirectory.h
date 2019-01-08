@@ -9,7 +9,7 @@
 
 class RootDirectory {
 	private:
-		FileEntry fileList[65536];
+		FileEntry fileList[NUM_DIR_ENTRIES];
 		bool listDeserialized;
 	public:
 		RootDirectory();
@@ -21,6 +21,6 @@ class RootDirectory {
 		int searchEntry(const char* path, uint8_t uid, uint8_t gid);
 		FileEntry getEntry(int index);
 		int removeEntry(const char* path);
-		void serialize();
+		void serialize(char *buffer);
 		void deserialize();
 };

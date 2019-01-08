@@ -11,7 +11,7 @@
 #ifndef myfs_structs_h
 #define myfs_structs_h
 
-#define NAME_LENGTH 255
+#define NAME_LENGTH 259
 #define BLOCK_SIZE 512
 #define NUM_DIR_ENTRIES 64
 #define NUM_OPEN_FILES 64
@@ -21,11 +21,11 @@
 #define NULL nullptr
 
 #define SUPERBLOCK_START_BLOCK 0
-#define ROOT_START_BLOCK 273
+#define ROOT_START_BLOCK 273 //sizeof(RootDirectory) = 36 blocks or 18,432 byte
 #define DATA_START_BLOCK 4881
 
 typedef struct {
-	char filename[8];
+	char filename[NAME_LENGTH];
 	uint8_t uid;
 	uint8_t gid;
 	uint32_t sizeOfFile;
