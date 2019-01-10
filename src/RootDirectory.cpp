@@ -80,12 +80,16 @@ int RootDirectory::removeEntry(const char* path){
 	return -(ENOENT);
 }
 
+void RootDirectory::getAllFiles(FileEntry fes[]){
+	fes = this->fileList;
+}
+
 void RootDirectory::serialize(char buffer[]){
 	memcpy(&buffer, this->fileList, sizeof(this->fileList));
 	return;
 }
 
 void RootDirectory::deserialize(char buffer[]){
-	memcpy(this->fileList, &buffer, sizeof(buffer));
+	memcpy(this->fileList, &buffer, sizeof(*buffer));
 	return;
 }

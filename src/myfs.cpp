@@ -34,16 +34,20 @@ MyFS::MyFS() {
     this->logFile= stderr;
     this->openedFiles = 0;
     this->bd = new BlockDevice();
+    // TODO: Superblock
 }
 
 MyFS::~MyFS() {
 	//serialize RootDirectory + write to blockdevice
-	char buffer[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
+	//char buffer[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
+	char *buffer = new char[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
 	this->rd->serialize(buffer);
 	for(int i = ROOT_START_BLOCK; i <= ROOT_START_BLOCK + ((FILE_ENTRY_SIZE * NUM_DIR_ENTRIES)/BLOCK_SIZE); i++){
 	 	bd->write(i, buffer);
 	   	buffer += BLOCK_SIZE;
 	}
+
+	// TODO: Serialize DMAP + FAT
 }
 
 int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
@@ -56,7 +60,7 @@ int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
     	statbuf->st_mtim.tv_sec = fe.mtime;
     	statbuf->st_mode = fe.mode;
     	statbuf->st_size = (size_t) fe.sizeOfFile;
-    	statbuf->st_blocks = fe.sizeOfFile / BLOCK_SIZE;
+    	statbuf->st_blocks = (fe.sizeOfFile + BLOCK_SIZE - 1) / BLOCK_SIZE; //round up
     	statbuf->st_gid = fe.gid;
     	statbuf->st_uid = fe.uid;
     	RETURN(0);
@@ -72,7 +76,7 @@ int MyFS::fuseReadlink(const char *path, char *link, size_t size) {
 
 int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     LOGM();
-    int firstBlock = 0; //find free block in dmap
+    int firstBlock = 0; // TODO: find free block in dmap
     int sizeOfFile = 0;
     int status = this->rd->addEntry(path, firstBlock, sizeOfFile, mode, getuid(), getgid());
     
@@ -206,9 +210,18 @@ int MyFS::fuseFlush(const char *path, struct fuse_file_info *fileInfo) {
 int MyFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
     
-    // TODO: Implement this!
-    
-    RETURN(0);
+    if(fileInfo->fh != 0){
+    	BlockCache *cache = (BlockCache*) fileInfo->fh;
+    	if(strcmp(cache->fe.filename, path) == 0){
+    		delete cache;
+    		this->openedFiles--;
+    		RETURN(0);
+    	}
+    	else{
+    		RETURN(-ENOENT);
+    	}
+    }
+    RETURN(-20);
 }
 
 int MyFS::fuseFsync(const char *path, int datasync, struct fuse_file_info *fi) {
@@ -229,7 +242,8 @@ int MyFS::fuseRemovexattr(const char *path, const char *name) {
 int MyFS::fuseOpendir(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
     
-    // TODO: Implement this!
+    //check rights to access directory
+    fileInfo->fh = 1;
     
     RETURN(0);
 }
@@ -237,10 +251,35 @@ int MyFS::fuseOpendir(const char *path, struct fuse_file_info *fileInfo) {
 int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
     
-    // TODO: Implement this!
+    filler(buf, ".", NULL, 0); //add self directory
+    filler(buf, "..", NULL, 0); //add top directory
+
+    if(strcmp(path, "/") == 0){
+    	FileEntry fes[NUM_DIR_ENTRIES];
+    	rd->getAllFiles(fes);
+    	for(int i = 0; i < NUM_DIR_ENTRIES; i++){
+    		if(strcmp(fes[i].filename, "\0") != 0 && fes[i].firstBlock != 0){
+    			struct stat s;
+    			s.st_atim.tv_sec = fes[i].atime;
+    			s.st_ctim.tv_sec = fes[i].ctime;
+    			s.st_mtim.tv_sec = fes[i].mtime;
+    			s.st_mode = fes[i].mode;
+    			s.st_size = (size_t) fes[i].sizeOfFile;
+    			s.st_blocks = (fes[i].sizeOfFile + BLOCK_SIZE - 1) / BLOCK_SIZE; //round up
+    			s.st_gid = fes[i].gid;
+    			s.st_uid = fes[i].uid;
+
+    			const struct stat *x = &s;
+    			filler(buf, fes[i].filename, x, 0);
+    		}
+    	}
+    	RETURN(0);
+    }
     
-    RETURN(0);
+    RETURN(-ENOENT);
+
     
+
     // <<< My new code
 }
 
@@ -265,9 +304,17 @@ int MyFS::fuseTruncate(const char *path, off_t offset, struct fuse_file_info *fi
 int MyFS::fuseCreate(const char *path, mode_t mode, struct fuse_file_info *fileInfo) {
     LOGM();
     
-    // TODO: Implement this!
-    
-    RETURN(0);
+    int r = this->fuseMknod(path, mode, 0);
+    if(r >= 0){
+    	int r2 = this->fuseOpen(path, fileInfo);
+    	if(r2 >= 0){
+    		RETURN(0);
+    	}
+    	else{
+    		RETURN(r2)
+    	}
+    }
+    RETURN(r);
 }
 
 void MyFS::fuseDestroy() {
@@ -275,18 +322,23 @@ void MyFS::fuseDestroy() {
 }
 
 void* MyFS::fuseInit(struct fuse_conn_info *conn) {
-    // Open logfile
-	//open BlockDevice here!
-
+	//open BlockDevice
+	bd->open(((MyFsInfo *) fuse_get_context()->private_data)->contFile);
 
 	//deserialize RootDirectory
-    char buffer[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
+    char *buffer = new char[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
     for(int i = ROOT_START_BLOCK; i <= ROOT_START_BLOCK + ((FILE_ENTRY_SIZE * NUM_DIR_ENTRIES)/BLOCK_SIZE); i++){
     	bd->read(i, buffer);
-    	buffer += BLOCK_SIZE;
+    	for(int i = 0; i < BLOCK_SIZE; i++){
+    		buffer++;
+    	}
     }
     this->rd->deserialize(buffer);
 
+    // TODO: deserialize dmap + fat
+
+
+    // Open logfile
     this->logFile= fopen(((MyFsInfo *) fuse_get_context()->private_data)->logFile, "w+");
     if(this->logFile == NULL) {
         fprintf(stderr, "ERROR: Cannot open logfile %s\n", ((MyFsInfo *) fuse_get_context()->private_data)->logFile);
