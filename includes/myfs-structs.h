@@ -17,7 +17,7 @@
 #define NUM_OPEN_FILES 64
 
 #define DATA_BLOCKS 65536
-
+#define FILE_ENTRY_SIZE 288
 
 #define SUPERBLOCK_START_BLOCK 0
 #define ROOT_START_BLOCK 273 //sizeof(RootDirectory) = 36 blocks or 18,432 byte

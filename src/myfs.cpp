@@ -37,7 +37,13 @@ MyFS::MyFS() {
 }
 
 MyFS::~MyFS() {
-    
+	//serialize RootDirectory + write to blockdevice
+	char buffer[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
+	this->rd->serialize(buffer);
+	for(int i = ROOT_START_BLOCK; i <= ROOT_START_BLOCK + ((FILE_ENTRY_SIZE * NUM_DIR_ENTRIES)/BLOCK_SIZE); i++){
+	 	bd->write(i, buffer);
+	   	buffer += BLOCK_SIZE;
+	}
 }
 
 int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
@@ -271,6 +277,15 @@ void MyFS::fuseDestroy() {
 void* MyFS::fuseInit(struct fuse_conn_info *conn) {
     // Open logfile
 	//open BlockDevice here!
+
+
+	//deserialize RootDirectory
+    char buffer[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
+    for(int i = ROOT_START_BLOCK; i <= ROOT_START_BLOCK + ((FILE_ENTRY_SIZE * NUM_DIR_ENTRIES)/BLOCK_SIZE); i++){
+    	bd->read(i, buffer);
+    	buffer += BLOCK_SIZE;
+    }
+    this->rd->deserialize(buffer);
 
     this->logFile= fopen(((MyFsInfo *) fuse_get_context()->private_data)->logFile, "w+");
     if(this->logFile == NULL) {

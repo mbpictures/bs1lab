@@ -1,9 +1,7 @@
 #include "RootDirectory.h"
-#include <iostream>
 
 RootDirectory::RootDirectory() {
 	this->listDeserialized = false;
-	this->deserialize();
 }
 
 RootDirectory::~RootDirectory() {
@@ -82,10 +80,12 @@ int RootDirectory::removeEntry(const char* path){
 	return -(ENOENT);
 }
 
-void RootDirectory::serialize(char *buffer){
+void RootDirectory::serialize(char buffer[]){
+	memcpy(&buffer, this->fileList, sizeof(this->fileList));
 	return;
 }
 
-void RootDirectory::deserialize(){
+void RootDirectory::deserialize(char buffer[]){
+	memcpy(this->fileList, &buffer, sizeof(buffer));
 	return;
 }
