@@ -12,7 +12,7 @@
 #define blockdevice_h
 
 #include <stdio.h>
-#include <cstdint>
+#include <stdint.h>
 
 #define BD_BLOCK_SIZE 512
 

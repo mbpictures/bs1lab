@@ -12,6 +12,9 @@
 
 #include <fuse.h>
 #include <cmath>
+#include <unistd.h>
+#include <sys/types.h>
+
 
 #include "blockdevice.h"
 #include "myfs-structs.h"
@@ -21,13 +24,17 @@ class MyFS {
 private:
     static MyFS *_instance;
     FILE *logFile;
+    BlockDevice *bd;
     
+    RootDirectory *rd;
+    int openedFiles;
+
 public:
     static MyFS *Instance();
     
     // TODO: Add attributes of your file system here
-    RootDirectory *rd;
     
+
     MyFS();
     ~MyFS();
     

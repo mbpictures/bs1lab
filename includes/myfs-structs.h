@@ -18,7 +18,6 @@
 
 #define DATA_BLOCKS 65536
 
-#define NULL nullptr
 
 #define SUPERBLOCK_START_BLOCK 0
 #define ROOT_START_BLOCK 273 //sizeof(RootDirectory) = 36 blocks or 18,432 byte
@@ -35,6 +34,12 @@ typedef struct {
 	uint32_t mtime;
 	uint16_t firstBlock;
 }FileEntry;
+
+typedef struct {
+	FileEntry fe;
+	int blockRead;
+	char data[BLOCK_SIZE];
+}BlockCache;
 
 // TODO: Add structures of your file system here
 
