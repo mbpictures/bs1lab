@@ -55,10 +55,14 @@ Serialisiere den gesamten Superblock (bestehend aus DMAP, FAT und ggf. weiteren 
 Lese den Buffer ein und schreibe die einzelnen Elemente zurück in die Attribute des Superblocks.
 
 ### RootDirectory
- * **boolean addEntry(const char&ast; path, mode_t mode)**<br>
-Füge neuen Eintrag in den ersten freien Index des entries-Arrays. Überprüfe, ob Filename noch nicht existiert, falls doch return 1. Filename = path, Zeiten = aktuelle Urzeit, User/Group-ID = aktueller Nutzer, Rechte = aus mode. Wenn in Array eingetragen, return 0.
+ * **int addEntry(const char&ast; path, uint16_t firstBlock, uint32_t sizeOfFile, mode_t mode, uint8_t uid, uint8_t gid)**<br>
+Füge neuen Eintrag in den ersten freien Index des entries-Arrays. Überprüfe, ob Filename noch nicht existiert, falls doch return -(ENTEXITST). Filename = path, Zeiten = aktuelle Urzeit, User/Group-ID = Parameter, Rechte = aus mode. Wenn in Array eingetragen, return 0.
  * **int removeEntry(const char&ast; path)**<br>
 Suche und entferne den entry aus dem Array mit dem filename = path, dann return 0. Wenn er nicht gefunden wird return 1.
+ * **int searchEntry(const char&ast; path, uint8_t uid, uint8_t gid)**<br>
+Suche aus Array filename = path und return index des entsprechenden FileEntries. Wenn er nicht gefunden wird return -NOENTRY.
+ * **FileEntry getEntry(int index)**<br>
+Gib den FileEntry am enstsprechenden index zurück.
  * **void serialize(const char&ast; buffer)**<br>
 Serialisiere das gesamte Entry-Array sequentiell in den Buffer, welcher anschließend geschrieben werden kann.
  * **void deserialize(const char&ast; buffer)**<br>
