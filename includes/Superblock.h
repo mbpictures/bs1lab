@@ -20,7 +20,7 @@ class Superblock {
 
 		 void setNextBlock(uint16_t blockAdress, uint16_t nextBlockAddress);
 
-		 void markBlock(uint16_t adress, Boolean status);
+		 void markBlock(uint16_t adress, bool status);
 
 		 void serialize(const char* buffer);
 

@@ -16,7 +16,7 @@ gib die Adresse zurück, falls nein gib 0 zurück.
 */
 uint16_t Superblock::findNextBlock(uint16_t address)
 {
-	if(FAT[adress]) return (FAT[adress];
+	if(FAT[address]) return FAT[address];
 		else return false;
 }
 
@@ -34,9 +34,9 @@ void Superblock::setNextBlock(uint16_t blockAdress, uint16_t nextBlockAddress)
 /*
 Markiere Block als belegt (status = false) oder frei (status = true)
 */
-void Superblock::markBlock(uint16_t address, Boolean status)
+void Superblock::markBlock(uint16_t address, bool status)
 {
-	if (address) DMap[adress] = status;
+	if (address) DMap[address] = status;
 }
 
 /*
