@@ -19,6 +19,7 @@
 #include "blockdevice.h"
 #include "myfs-structs.h"
 #include "RootDirectory.h"
+#include "Superblock.h"
 
 class MyFS {
 private:

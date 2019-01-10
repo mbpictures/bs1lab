@@ -8,6 +8,15 @@ RootDirectory::~RootDirectory() {
 	//this->serialize();
 }
 
+void RootDirectory::init(){
+	FileEntry fe;
+	fe.filename[0] = '\0';
+	fe.firstBlock = 0;
+	for(int i = 0; i < NUM_DIR_ENTRIES; i++){
+		this->fileList[i] = fe;
+	}
+}
+
 int RootDirectory::addEntry(const char* path, uint16_t firstblock, uint32_t sizeOfFile, mode_t mode, uint8_t uid, uint8_t gid) {
 	FileEntry *newEntry = new FileEntry;
 	//Remove Path information of filepath

@@ -14,6 +14,7 @@ class RootDirectory {
 	public:
 		RootDirectory();
 		~RootDirectory();
+		void init();
 		int addEntry(const char* path, uint16_t firstblock, uint32_t sizeOfFile, mode_t mode, uint8_t uid, uint8_t gid);
 		/**
 		 * return index of fileentry matching path, negative int when error occured
