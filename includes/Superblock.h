@@ -8,10 +8,10 @@
 
 class Superblock {
 
-	 private:
+	private:
 		uint32_t blockCount;
-		bool DMap[2E16];
-		uint16_t FAT[2E16];
+		bool DMap[65536];
+		uint16_t FAT[65536];
 	public:
 
 		 uint16_t findFreeBlock();
