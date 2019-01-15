@@ -19,9 +19,9 @@
 #define DATA_BLOCKS 65536
 #define FILE_ENTRY_SIZE 288
 
-#define SUPERBLOCK_START_BLOCK 0
-#define ROOT_START_BLOCK 273 //sizeof(RootDirectory) = 36 blocks or 18,432 byte
-#define DATA_START_BLOCK 4881
+#define SUPERBLOCK_START_BLOCK 0 //sizeof(Superblock) = 384 blocks or 196,608 byte
+#define ROOT_START_BLOCK 384 //sizeof(RootDirectory) = 36 blocks or 18,432 byte
+#define DATA_START_BLOCK 420
 
 typedef struct {
 	char filename[NAME_LENGTH];

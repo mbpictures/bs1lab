@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "myfs-structs.h"
+
 #ifndef Superblock_h
 #define Superblock_h
 
