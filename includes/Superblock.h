@@ -4,8 +4,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "myfs-structs.h"
-
 #ifndef Superblock_h
 #define Superblock_h
 
@@ -25,7 +23,7 @@ public:
 
 	Superblock();
 
-	Superblock(bool dmap[], uint16_t fat[]);
+	Superblock(bool *dmap, uint16_t *fat);
 
 	~Superblock();
 
@@ -41,12 +39,5 @@ public:
 
 	void deserialize(char* buffer);
 };
-/*
-typedef struct
-{
-	bool DMap[DMAP_SIZE];
-	uint16_t FAT[FAT_SIZE];
-}SerializedSuperBlock;
-*/
 
 #endif // Superblock_h
