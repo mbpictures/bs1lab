@@ -39,6 +39,13 @@ Gemountete Datenträger werden in /etc/fstab eingetragen. Diese Datei wird immer
 tmpfs           /mnt/tmpfschk   tmpfs        defaults                                           0 0
 ```
 
+Das initialisieren größerer Datenstrukturen kann mit memset vereinfacht werden.
+```c++
+bool myArr[500];
+memset(myArr, 1, 500);
+```
+
+
 ## Interfaces
 ### Superblock
  * **int_16 findFreeBlock(void)**<br>
