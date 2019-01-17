@@ -1,6 +1,6 @@
 # bs1lab
 Das Repository dient der gemeinsamen Nutzung und Weiterentwicklung eines eigenen Filesystems (MyFS).
-Ein Laufwerk wird mittels "Image" (in der BlockDevice-Klasse) simuliert.
+Ein Laufwerk wird mittels "Image" (in der BlockDevice-Klasse) simuliert. [Anleitung zur Installation](#installation-und-testen)
 
 ## ToDo's:
  * Organisation des FS planen
@@ -88,3 +88,6 @@ Lese den Buffer ein und schreibe die einzelnen Elemente als Struct-Array zurück
 * Beim Kopieren von Daten werden Pfadnamen entfernt
 * Bei Duplikaten (gleicher Name) soll ein Fehler geworfen werden
 * Zugriffsrechte sind immer Read-Only (444)
+
+## Installation und Testen
+Um dieses Projekt nutzen zu können wird eine Linux umgebung benötigt. Zunächst muss das Repository geklont werden. Anschließend müssen (falls noch nicht geschehen) folgende Pakete nachinstalliert werden: g++, gcc, fuse, libfuse-dev, make. Anschließend kann im Root Verzeichnis die Kommandos "make all" bzw "make mkfs.myfs" oder "make mount.myfs" ausgeführt werden. Um eine Container Datei zu erstellen wird folgendes Kommando benötigt: "./mkfs.myfs fs/container.bin DATEIEN_ZUM_KOPIEREN..." (erstellt die container.bin Datei im Verzeichnis fs des Repositories). Um das Dateisystem einzuhängen: "./mount.myfs fs/container.bin logfile mountpoint".
