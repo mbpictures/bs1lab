@@ -31,7 +31,6 @@ int main(int argc, char *argv[]) {
 
     for(int i = 2; i < argc; i++){
 
-    	std::cout << "Writing File: ";
     	int fd = open(argv[i], O_RDONLY); //open file for Read-Only
     	//get file of size
     	struct stat stat_buf;
@@ -47,6 +46,9 @@ int main(int argc, char *argv[]) {
     	filename[filenameLength] = '\0';
 
     	const char *filenameConst = filename;
+
+    	std::cout << "Writing File: " << filename << " Size: " << sizeOfFile << std::endl;
+
     	rd->addEntry(filenameConst, nextBlock, sizeOfFile, 0444, getuid(), getgid());
 
     	char *buf = new char[sizeOfFile];
