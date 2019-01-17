@@ -1,4 +1,5 @@
 #include "RootDirectory.h"
+#include <iostream>
 
 RootDirectory::RootDirectory() {
 	this->listDeserialized = false;
@@ -21,8 +22,14 @@ int RootDirectory::addEntry(const char* path, uint16_t firstblock, uint32_t size
 	FileEntry *newEntry = new FileEntry;
 	//Remove Path information of filepath
 	char *escapedpath = strrchr(strdup(path), '/');
-	escapedpath++;
-	
+	if(escapedpath != 0){
+		escapedpath++;
+	}
+	else{
+		escapedpath = strdup(path);
+	}
+
+
 	//check if file already exists
 	for (int i = 0; i < NUM_DIR_ENTRIES; i++) {
 		if (strcmp(this->fileList[i].filename, escapedpath) == 0) {
@@ -34,6 +41,7 @@ int RootDirectory::addEntry(const char* path, uint16_t firstblock, uint32_t size
 	strcpy(newEntry->filename, escapedpath);
 	newEntry->mode = mode;
 
+	newEntry->filename[258] = '\0';
 	struct timeval tv;
 	gettimeofday(&tv,nullptr);
 	newEntry->atime = (uint32_t) tv.tv_sec;
@@ -93,8 +101,11 @@ void RootDirectory::getAllFiles(FileEntry fes[]){
 	fes = this->fileList;
 }
 
-void RootDirectory::serialize(char buffer[]){
-	memcpy(&buffer, this->fileList, sizeof(this->fileList));
+void RootDirectory::serialize(char *buffer){
+	//std::cout << "Buffer size: " << sizeof(*buffer) << " MEmcpy: " << sizeof(FileEntry) * NUM_DIR_ENTRIES;
+
+
+	memcpy(buffer, this->fileList, sizeof(FileEntry) * NUM_DIR_ENTRIES);
 	return;
 }
 

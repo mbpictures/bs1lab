@@ -9,35 +9,91 @@
 #include "myfs.h"
 #include "blockdevice.h"
 #include "macros.h"
+#include <iostream>
+#include <stdio.h>
 
 int main(int argc, char *argv[]) {
 
+	std::cout << "Program start: " << argc << std::endl;
     // TODO: Implement file system generation & copying of files here
     Superblock *sb = new Superblock;
+    std::cout << "Superblock created\n";
     RootDirectory *rd = new RootDirectory;
-    BlockDevice *bd = new BlockDevice;
-    bd->open(argv[0]);
+    std::cout << "RootDirectory created\n";
+    BlockDevice *bd = new BlockDevice(BLOCK_SIZE);
+    std::cout << "BlockDevice created\n";
+    std::cout << "Write container: " << argv[1] << std::endl;
+
+    bd->create(argv[1]);
+
 
     rd->init();
-    // TODO (optional): init Superblock with default values
 
-    for(int i = 1; i < argc; i++){
-    	uint16_t firstBlock = sb->findFreeBlock();
-    	uint32_t sizeOfFile = 0;
-    	sb->markBlock(firstBlock, true);
-    	rd->addEntry(argv[i], firstBlock, sizeOfFile, 0444, getuid(), getgid());
+    for(int i = 2; i < argc; i++){
 
-    	// TODO: open real file and copy files into bd
+    	std::cout << "Writing File: ";
+    	int fd = open(argv[i], O_RDONLY); //open file for Read-Only
+    	//get file of size
+    	struct stat stat_buf;
+    	int sc = fstat(fd, &stat_buf);
+    	uint32_t sizeOfFile = sc == 0 ? stat_buf.st_size : 0;
+
+    	uint16_t nextBlock = DATA_START_BLOCK;
+    	sb->markBlock(nextBlock, true);
+
+    	size_t filenameLength = strlen(argv[i]);
+    	char *filename = (char*) malloc(filenameLength + 1);
+    	strcpy(filename, argv[i]);
+    	filename[filenameLength] = '\0';
+
+    	const char *filenameConst = filename;
+    	rd->addEntry(filenameConst, nextBlock, sizeOfFile, 0444, getuid(), getgid());
+
+    	char *buf = new char[sizeOfFile];
+    	read(fd, buf, sizeOfFile);
     	//write file on blockdevice
-    	for(int i = 0; i < ((sizeOfFile + BLOCK_SIZE) / BLOCK_SIZE); i++){
-    		uint16_t nextBlock = sb->findFreeBlock();
-    		if(i == 0){
-    			// sb set next Block
+    	for(unsigned int i = 0; i < ((sizeOfFile + BLOCK_SIZE) / BLOCK_SIZE); i++){
+    		uint16_t nextBlockNew = nextBlock + 1;
+    		sb->setNextBlock(nextBlock, nextBlockNew);
+    		sb->markBlock(nextBlockNew, true);
+
+    		char writeBuf[BLOCK_SIZE];
+    		for(int i = 0; i < BLOCK_SIZE; i++){
+    			writeBuf[i] = *buf;
+    			buf++;
     		}
-    		else{
-    			// sb set next Block
-    		}
+
+    		bd->write(nextBlock, writeBuf);
+    		nextBlock = nextBlockNew;
     	}
     }
+    //last block
+    char data[BLOCK_SIZE];
+    bd->write(DATA_START_BLOCK+DATA_BLOCKS, data);
+
+    //write RootDirectory to Blockdevice
+    char *buffer = new char[sizeof(FileEntry) * NUM_DIR_ENTRIES];
+    rd->serialize(buffer);
+    for(int i = ROOT_START_BLOCK; i < DATA_START_BLOCK; i++){
+    	char writeBuf[BLOCK_SIZE];
+    	for(int i = 0; i < BLOCK_SIZE; i++){
+    		writeBuf[i] = *buffer;
+    		buffer++;
+    	}
+    	bd->write(i, writeBuf);
+    }
+
+    //write Superblock to Blockdevice
+    char *bufferSB = new char[(ROOT_START_BLOCK -1) * BLOCK_SIZE];
+    sb->serialize(bufferSB);
+    for(int i = SUPERBLOCK_START_BLOCK; i < ROOT_START_BLOCK; i++){
+      	char writeBuf[BLOCK_SIZE];
+       	for(int i = 0; i < BLOCK_SIZE; i++){
+       		writeBuf[i] = *bufferSB;
+       		bufferSB++;
+       	}
+       	bd->write(i, writeBuf);
+    }
+
     return 0;
 }

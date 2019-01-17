@@ -23,6 +23,6 @@ class RootDirectory {
 		FileEntry getEntry(int index);
 		int removeEntry(const char* path);
 		void getAllFiles(FileEntry *fes);
-		void serialize(char buffer[]);
+		void serialize(char *buffer);
 		void deserialize(char buffer[]);
 };
