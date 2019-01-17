@@ -329,22 +329,6 @@ void MyFS::fuseDestroy() {
 }
 
 void* MyFS::fuseInit(struct fuse_conn_info *conn) {
-	//open BlockDevice
-	bd->open(((MyFsInfo *) fuse_get_context()->private_data)->contFile);
-
-	//deserialize RootDirectory
-    char *buffer = new char[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
-    for(int i = ROOT_START_BLOCK; i <= ROOT_START_BLOCK + ((FILE_ENTRY_SIZE * NUM_DIR_ENTRIES)/BLOCK_SIZE); i++){
-    	bd->read(i, buffer);
-    	for(int i = 0; i < BLOCK_SIZE; i++){
-    		buffer++;
-    	}
-    }
-    this->rd->deserialize(buffer);
-
-    // TODO: deserialize dmap + fat
-
-
     // Open logfile
     this->logFile= fopen(((MyFsInfo *) fuse_get_context()->private_data)->logFile, "w+");
     if(this->logFile == NULL) {
@@ -361,8 +345,21 @@ void* MyFS::fuseInit(struct fuse_conn_info *conn) {
         // you can get the containfer file name here:
         LOGF("Container file name: %s", ((MyFsInfo *) fuse_get_context()->private_data)->contFile);
         
-        // TODO: Implement your initialization methods here!
-    }
+        //open BlockDevice
+        bd->open(((MyFsInfo *) fuse_get_context()->private_data)->contFile);
+
+        //deserialize RootDirectory
+        char *buffer = new char[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
+        for(int i = ROOT_START_BLOCK; i <= ROOT_START_BLOCK + ((FILE_ENTRY_SIZE * NUM_DIR_ENTRIES)/BLOCK_SIZE); i++){
+           	bd->read(i, buffer);
+           	for(int i = 0; i < BLOCK_SIZE; i++){
+           		buffer++;
+           	}
+        }
+        this->rd->deserialize(buffer);
+
+        // TODO: deserialize dmap + fat
+   }
     
     RETURN(0);
 }
