@@ -197,8 +197,18 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
 int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
     
-    // TODO: Implement this!
     
+    uint16_t blockNo = (offset + BLOCK_SIZE - 1) / BLOCK_SIZE; //BlockNo to write. 1 = write first block of device, or write nth block of file
+
+    int index = this->rd->searchEntry(path, getuid(), getgid());
+    FileEntry fe = this->rd->getEntry(index);
+    uint16_t firstBlock = fe.firstBlock;
+
+    //TODO: iterate through fat until blockNo is reached, if file doesn't have blockNo blocks,
+    // 		allocate more blocks using fat and dmap
+    // 		when physical block is found, write buf to BlockDevice using offset % BLOCK_SIZE and size
+
+
     this->serializeControlStructures();
 
     RETURN(0);
