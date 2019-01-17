@@ -9,7 +9,7 @@ Superblock::Superblock(bool *dmap, uint16_t *fat)
 
 Superblock::Superblock()
 {
-	memset(this->DMap, 1, DMAP_SIZE);
+	memset(this->DMap, 1, DMAP_SIZE * sizeof(bool));
 	memset(this->FAT, 0, FAT_SIZE * sizeof(uint16_t));
 }
 

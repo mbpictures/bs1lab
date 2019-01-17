@@ -34,20 +34,14 @@ MyFS::MyFS() {
     this->logFile= stderr;
     this->openedFiles = 0;
     this->bd = new BlockDevice();
-    // TODO: Superblock
+    this->sb = new Superblock();
 }
 
 MyFS::~MyFS() {
-	//serialize RootDirectory + write to blockdevice
-	//char buffer[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
-	char *buffer = new char[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
-	this->rd->serialize(buffer);
-	for(int i = ROOT_START_BLOCK; i <= ROOT_START_BLOCK + ((FILE_ENTRY_SIZE * NUM_DIR_ENTRIES)/BLOCK_SIZE); i++){
-	 	bd->write(i, buffer);
-	   	buffer += BLOCK_SIZE;
-	}
-
-	// TODO: Serialize DMAP + FAT
+	this->serializeControlStructures();
+	delete rd;
+	delete sb;
+	delete bd;
 }
 
 int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
@@ -80,6 +74,8 @@ int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     int sizeOfFile = 0;
     int status = this->rd->addEntry(path, firstBlock, sizeOfFile, mode, getuid(), getgid());
     
+    this->serializeControlStructures();
+
     RETURN(status);
 }
 
@@ -90,9 +86,18 @@ int MyFS::fuseMkdir(const char *path, mode_t mode) {
 
 int MyFS::fuseUnlink(const char *path) {
     LOGM();
-    
+    int index = this->rd->searchEntry(path, getuid(), getgid());
+    if(index < 0){ //file doesn't exist!
+    	RETURN(index);
+    }
+    FileEntry fe = this->rd->getEntry(index);
+    uint16_t firstBlock = fe.firstBlock;
+    this->sb->markBlock(firstBlock, 0);
+    // TODO: mark all blocks of file as FREE & clean fat for this file
     int status = this->rd->removeEntry(path);
     
+    this->serializeControlStructures();
+
     RETURN(status);
 }
 
@@ -194,6 +199,8 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     
     // TODO: Implement this!
     
+    this->serializeControlStructures();
+
     RETURN(0);
 }
 
@@ -379,5 +386,19 @@ int MyFS::fuseGetxattr(const char *path, const char *name, char *value, size_t s
 }
         
 // TODO: Add your own additional methods here!
-            
+void MyFS::serializeControlStructures(){
+	//write RootDirectory to Blockdevice
+	char *bufferRD = new char[sizeof(FileEntry) * NUM_DIR_ENTRIES];
+	this->rd->serialize(bufferRD);
+	for(int i = ROOT_START_BLOCK; i < DATA_START_BLOCK; i++){
+	   	char writeBuf[BLOCK_SIZE];
+	   	for(int i = 0; i < BLOCK_SIZE; i++){
+	   		writeBuf[i] = *bufferRD;
+	   		bufferRD++;
+	   	}
+	  	this->bd->write(i, writeBuf);
+	}
+
+	//TODO: Write Superblock to Blockdevice
+}
 

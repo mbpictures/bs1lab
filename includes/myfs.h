@@ -28,6 +28,7 @@ private:
     BlockDevice *bd;
     
     RootDirectory *rd;
+    Superblock *sb;
     int openedFiles;
 
 public:
@@ -80,6 +81,7 @@ public:
     void fuseDestroy();
     
     // TODO: Add methods of your file system here
+    void serializeControlStructures();
     
 };
 
