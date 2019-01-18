@@ -359,17 +359,30 @@ void* MyFS::fuseInit(struct fuse_conn_info *conn) {
         //open BlockDevice
         bd->open(((MyFsInfo *) fuse_get_context()->private_data)->contFile);
 
+        LOG("Read Root Directory");
         //deserialize RootDirectory
-        char *buffer = new char[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
+        char *bufferRD = new char[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
         for(int i = ROOT_START_BLOCK; i <= ROOT_START_BLOCK + ((FILE_ENTRY_SIZE * NUM_DIR_ENTRIES)/BLOCK_SIZE); i++){
-           	bd->read(i, buffer);
-           	for(int i = 0; i < BLOCK_SIZE; i++){
-           		buffer++;
-           	}
+           	bd->read(i, bufferRD);
+           	bufferRD += BLOCK_SIZE;
         }
-        this->rd->deserialize(buffer);
+        this->rd->deserialize(bufferRD);
 
-        // TODO: deserialize dmap + fat
+        LOG("Read Superblock");
+        int size = (sizeof(uint16_t) * DATA_BLOCKS) + (sizeof(bool) * DATA_BLOCKS);
+        LOGF("Size bufferSB: %d", size);
+
+        char *bufferSB = new char[size];
+        LOG("All read in");
+        for(int i = SUPERBLOCK_START_BLOCK; i < ROOT_START_BLOCK; i++){
+        	bd->read(i, bufferSB);
+           	bufferSB += BLOCK_SIZE;
+        }
+
+        this->sb->deserialize(bufferSB);
+
+        int index = this->rd->searchEntry("README.md", getuid(), getgid());
+        LOGF("index: %d", index);
    }
     
     RETURN(0);
@@ -407,6 +420,16 @@ void MyFS::serializeControlStructures(){
 	  	this->bd->write(i, writeBuf);
 	}
 
-	//TODO: Write Superblock to Blockdevice
+	//write Superblock to Blockdevice
+	char *bufferSB = new char[(ROOT_START_BLOCK -1) * BLOCK_SIZE];
+	this->sb->serialize(bufferSB);
+	for(int i = SUPERBLOCK_START_BLOCK; i < ROOT_START_BLOCK; i++){
+	   	char writeBuf[BLOCK_SIZE];
+	   	for(int i = 0; i < BLOCK_SIZE; i++){
+	   		writeBuf[i] = *bufferSB;
+	   		bufferSB++;
+	   	}
+	   	this->bd->write(i, writeBuf);
+	}
 }
 
