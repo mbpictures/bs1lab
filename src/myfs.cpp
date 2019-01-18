@@ -292,6 +292,7 @@ int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler, off_t
     	FileEntry fes[NUM_DIR_ENTRIES];
     	rd->getAllFiles(fes);
     	for(int i = 0; i < NUM_DIR_ENTRIES; i++){
+    		LOGF("files found: %s", fes[i].filename);
     		if(strcmp(fes[i].filename, "\0") != 0 && fes[i].firstBlock != 0){
     			struct stat s;
     			s.st_atim.tv_sec = fes[i].atime;
@@ -379,20 +380,22 @@ void* MyFS::fuseInit(struct fuse_conn_info *conn) {
         //deserialize RootDirectory
         char *bufferRD = new char[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
         for(int i = ROOT_START_BLOCK; i < DATA_START_BLOCK; i++){
-        	bd->read(i, bufferRD);
-           	bufferRD += BLOCK_SIZE;
+        	char *temp = new char[BLOCK_SIZE];
+        	bd->read(i, temp);
+           	strcat(bufferRD, temp);
         }
-        bufferRD -= FILE_ENTRY_SIZE * NUM_DIR_ENTRIES;
+        //bufferRD -= FILE_ENTRY_SIZE * NUM_DIR_ENTRIES;
 
         LOG("Read Superblock");
         int size = (sizeof(uint16_t) * DATA_BLOCKS) + (sizeof(bool) * DATA_BLOCKS);
 
         char *bufferSB = new char[size];
         for(int i = SUPERBLOCK_START_BLOCK; i < ROOT_START_BLOCK; i++){
-        	bd->read(i, bufferSB);
-           	bufferSB += BLOCK_SIZE;
+        	char *temp = new char[BLOCK_SIZE];
+        	bd->read(i, temp);
+        	strcat(bufferSB, temp);
         }
-        bufferSB -= size;
+        //bufferSB -= size;
         this->sb->deserialize(bufferSB);
 
         //just read first entry for test. SPOILER: doesn't work
@@ -424,13 +427,14 @@ int MyFS::fuseGetxattr(const char *path, const char *name, char *value, size_t s
 // TODO: Add your own additional methods here!
 void MyFS::serializeControlStructures(){
 	//write RootDirectory to Blockdevice
-	char *bufferRD = new char[sizeof(FileEntry) * NUM_DIR_ENTRIES];
-	this->rd->serialize(bufferRD);
+	char *buffer = new char[sizeof(FileEntry) * NUM_DIR_ENTRIES];
+	this->rd->serialize(buffer);
+
 	for(int i = ROOT_START_BLOCK; i < DATA_START_BLOCK; i++){
-	   	char writeBuf[BLOCK_SIZE];
+	  	char writeBuf[BLOCK_SIZE];
 	   	for(int i = 0; i < BLOCK_SIZE; i++){
-	   		writeBuf[i] = *bufferRD;
-	   		bufferRD++;
+	   		writeBuf[i] = *buffer;
+	   		buffer++;
 	   	}
 	  	this->bd->write(i, writeBuf);
 	}
@@ -444,7 +448,7 @@ void MyFS::serializeControlStructures(){
 	   		writeBuf[i] = *bufferSB;
 	   		bufferSB++;
 	   	}
-	   	this->bd->write(i, writeBuf);
+	   	bd->write(i, writeBuf);
 	}
 }
 

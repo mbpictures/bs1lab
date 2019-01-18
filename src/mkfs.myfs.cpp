@@ -80,6 +80,7 @@ int main(int argc, char *argv[]) {
     //write RootDirectory to Blockdevice
     char *buffer = new char[sizeof(FileEntry) * NUM_DIR_ENTRIES];
     rd->serialize(buffer);
+
     for(int i = ROOT_START_BLOCK; i < DATA_START_BLOCK; i++){
     	char writeBuf[BLOCK_SIZE];
     	for(int i = 0; i < BLOCK_SIZE; i++){

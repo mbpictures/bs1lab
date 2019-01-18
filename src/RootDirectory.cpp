@@ -111,5 +111,5 @@ void RootDirectory::serialize(char *buffer){
 
 void RootDirectory::deserialize(char buffer[]){
 	memcpy(this->fileList, &buffer, sizeof(*buffer));
-	return this->fileList[0];
+	return;
 }
