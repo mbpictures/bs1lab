@@ -22,11 +22,11 @@ int RootDirectory::addEntry(const char* path, uint16_t firstblock, uint32_t size
 	FileEntry *newEntry = new FileEntry;
 	//Remove Path information of filepath
 	char *escapedpath = strrchr(strdup(path), '/');
-	if(escapedpath != 0){
-		escapedpath++;
-	}
-	else{
-		escapedpath = strdup(path);
+	if(escapedpath == 0){
+		char *newEscaped = new char[strlen(path) + 1];
+		strcpy(newEscaped, "/");
+		strcat(newEscaped, path);
+		escapedpath = newEscaped;
 	}
 
 
@@ -111,5 +111,5 @@ void RootDirectory::serialize(char *buffer){
 
 void RootDirectory::deserialize(char buffer[]){
 	memcpy(this->fileList, &buffer, sizeof(*buffer));
-	return;
+	return this->fileList[0];
 }

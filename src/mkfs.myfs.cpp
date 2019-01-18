@@ -29,6 +29,10 @@ int main(int argc, char *argv[]) {
 
     rd->init();
 
+    //add defaults to root directory
+    rd->addEntry("/", 0, 0, 0444, getuid(), getgid());
+    rd->addEntry("/.Trash", 0, 0, 0444, getuid(), getgid());
+    rd->addEntry("/.Trash-1000", 0, 0, 0444, getuid(), getgid());
     for(int i = 2; i < argc; i++){
 
     	int fd = open(argv[i], O_RDONLY); //open file for Read-Only

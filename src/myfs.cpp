@@ -46,6 +46,22 @@ MyFS::~MyFS() {
 
 int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
     LOGM();
+    LOGF("Getattr of Path: %s", path);
+    if(strcmp(path, "/") == 0){ //getAttr of Root path
+    	LOG("Return getAttr of root");
+    	struct timeval tv;
+    	gettimeofday(&tv,nullptr);
+    	statbuf->st_atim.tv_sec = tv.tv_sec;
+    	statbuf->st_ctim.tv_sec = tv.tv_sec;
+    	statbuf->st_mtim.tv_sec = tv.tv_sec;
+    	statbuf->st_mode = S_IFDIR | 0755;
+    	statbuf->st_nlink = 1;
+    	statbuf->st_size = (size_t) DATA_BLOCKS * BLOCK_SIZE;
+    	statbuf->st_blocks = DATA_BLOCKS; //round up
+    	statbuf->st_gid = getgid();
+    	statbuf->st_uid = getuid();
+    	RETURN(0);
+    }
     int index = this->rd->searchEntry(path, getuid(), getgid());
     if(index >= 0){
     	FileEntry fe = this->rd->getEntry(index);
@@ -362,26 +378,25 @@ void* MyFS::fuseInit(struct fuse_conn_info *conn) {
         LOG("Read Root Directory");
         //deserialize RootDirectory
         char *bufferRD = new char[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
-        for(int i = ROOT_START_BLOCK; i <= ROOT_START_BLOCK + ((FILE_ENTRY_SIZE * NUM_DIR_ENTRIES)/BLOCK_SIZE); i++){
-           	bd->read(i, bufferRD);
+        for(int i = ROOT_START_BLOCK; i < DATA_START_BLOCK; i++){
+        	bd->read(i, bufferRD);
            	bufferRD += BLOCK_SIZE;
         }
-        this->rd->deserialize(bufferRD);
+        bufferRD -= FILE_ENTRY_SIZE * NUM_DIR_ENTRIES;
 
         LOG("Read Superblock");
         int size = (sizeof(uint16_t) * DATA_BLOCKS) + (sizeof(bool) * DATA_BLOCKS);
-        LOGF("Size bufferSB: %d", size);
 
         char *bufferSB = new char[size];
-        LOG("All read in");
         for(int i = SUPERBLOCK_START_BLOCK; i < ROOT_START_BLOCK; i++){
         	bd->read(i, bufferSB);
            	bufferSB += BLOCK_SIZE;
         }
-
+        bufferSB -= size;
         this->sb->deserialize(bufferSB);
 
-        int index = this->rd->searchEntry("README.md", getuid(), getgid());
+        //just read first entry for test. SPOILER: doesn't work
+        int index = this->rd->searchEntry("/README.md", getuid(), getgid());
         LOGF("index: %d", index);
    }
     
