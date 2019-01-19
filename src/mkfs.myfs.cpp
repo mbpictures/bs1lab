@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
     	for(unsigned int i = 0; i < ((sizeOfFile + BLOCK_SIZE) / BLOCK_SIZE); i++){
     		uint16_t nextBlockNew = nextBlock + 1;
     		sb->setNextBlock(nextBlock, nextBlockNew);
-    		sb->markBlock(nextBlockNew, true);
+    		sb->markBlock(nextBlockNew, 0);
 
     		char writeBuf[BLOCK_SIZE];
     		for(int i = 0; i < BLOCK_SIZE; i++){

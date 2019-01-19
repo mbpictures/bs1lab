@@ -8,7 +8,7 @@
 
 
 class RootDirectory {
-	private:
+	public:
 		FileEntry fileList[NUM_DIR_ENTRIES];
 		bool listDeserialized;
 	public:

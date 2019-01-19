@@ -100,10 +100,10 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: %s containerfile logfile mountpoint\n", argv[0]);
         return (EXIT_FAILURE);
     }
-    
+
     // call fuse initialization method
     fuse_stat = fuse_main(argc, argv, &myfs_oper, FsInfo);
-    
+
     fprintf(stderr, "fuse_main returned %d\n", fuse_stat);
     
     // cleanup

@@ -289,23 +289,24 @@ int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler, off_t
     filler(buf, "..", NULL, 0); //add top directory
 
     if(strcmp(path, "/") == 0){
-    	FileEntry fes[NUM_DIR_ENTRIES];
-    	rd->getAllFiles(fes);
+    	/*FileEntry fes[NUM_DIR_ENTRIES];
+    	rd->getAllFiles(fes); */
     	for(int i = 0; i < NUM_DIR_ENTRIES; i++){
-    		LOGF("files found: %s", fes[i].filename);
-    		if(strcmp(fes[i].filename, "\0") != 0 && fes[i].firstBlock != 0){
-    			struct stat s;
-    			s.st_atim.tv_sec = fes[i].atime;
-    			s.st_ctim.tv_sec = fes[i].ctime;
-    			s.st_mtim.tv_sec = fes[i].mtime;
-    			s.st_mode = fes[i].mode;
-    			s.st_size = (size_t) fes[i].sizeOfFile;
-    			s.st_blocks = (fes[i].sizeOfFile + BLOCK_SIZE - 1) / BLOCK_SIZE; //round up
-    			s.st_gid = fes[i].gid;
-    			s.st_uid = fes[i].uid;
+    		//LOGF("files found: %s", this->rd->fileList[i].filename);
+    		if(strcmp(this->rd->fileList[i].filename, "\0") != 0 && this->rd->fileList[i].firstBlock != 0){
+    			LOGF("Read Dir Entry: %s", this->rd->fileList[i].filename);
+    			/*struct stat s;
+    			s.st_atim.tv_sec = this->rd->fileList[i].atime;
+    			s.st_ctim.tv_sec = this->rd->fileList[i].ctime;
+    			s.st_mtim.tv_sec = this->rd->fileList[i].mtime;
+    			s.st_mode = this->rd->fileList[i].mode;
+    			s.st_size = (size_t) this->rd->fileList[i].sizeOfFile;
+    			s.st_blocks = (this->rd->fileList[i].sizeOfFile + BLOCK_SIZE - 1) / BLOCK_SIZE; //round up
+    			s.st_gid = this->rd->fileList[i].gid;
+    			s.st_uid = this->rd->fileList[i].uid;
 
-    			const struct stat *x = &s;
-    			filler(buf, fes[i].filename, x, 0);
+    			const struct stat *x = &s;*/
+    			filler(buf, this->rd->fileList[i].filename, NULL, 0);
     		}
     	}
     	RETURN(0);
@@ -374,17 +375,25 @@ void* MyFS::fuseInit(struct fuse_conn_info *conn) {
         LOGF("Container file name: %s", ((MyFsInfo *) fuse_get_context()->private_data)->contFile);
         
         //open BlockDevice
-        bd->open(((MyFsInfo *) fuse_get_context()->private_data)->contFile);
+        this->bd->open(((MyFsInfo *) fuse_get_context()->private_data)->contFile);
 
         LOG("Read Root Directory");
         //deserialize RootDirectory
         char *bufferRD = new char[FILE_ENTRY_SIZE * NUM_DIR_ENTRIES];
+        int j = 0;
         for(int i = ROOT_START_BLOCK; i < DATA_START_BLOCK; i++){
         	char *temp = new char[BLOCK_SIZE];
-        	bd->read(i, temp);
-           	strcat(bufferRD, temp);
+        	this->bd->read(i, temp);
+           	memcpy((bufferRD + (j * BLOCK_SIZE)), temp, BLOCK_SIZE);
+        	j++;
         }
-        //bufferRD -= FILE_ENTRY_SIZE * NUM_DIR_ENTRIES;
+        //bufferRD -= j * BLOCK_SIZE; //set pointer back to start of bufferRD
+
+        /*for(int i = 0; i < FILE_ENTRY_SIZE * NUM_DIR_ENTRIES; i++){
+        	LOGF("Buffer[%d]: %c", i, bufferRD[i]);
+        }*/
+
+        this->rd->deserialize(bufferRD);
 
         LOG("Read Superblock");
         int size = (sizeof(uint16_t) * DATA_BLOCKS) + (sizeof(bool) * DATA_BLOCKS);

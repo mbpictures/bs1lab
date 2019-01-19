@@ -13,6 +13,13 @@ void RootDirectory::init(){
 	FileEntry fe;
 	fe.filename[0] = '\0';
 	fe.firstBlock = 0;
+	fe.atime = 0;
+	fe.ctime = 0;
+	fe.gid = 0;
+	fe.mode = 0;
+	fe.mtime = 0;
+	fe.sizeOfFile = 0;
+	fe.uid = 0;
 	for(int i = 0; i < NUM_DIR_ENTRIES; i++){
 		this->fileList[i] = fe;
 	}
@@ -101,7 +108,7 @@ void RootDirectory::getAllFiles(FileEntry fes[]){
 	fes = this->fileList;
 }
 
-void RootDirectory::serialize(char *buffer){
+void RootDirectory::serialize(char* buffer){
 	//std::cout << "Buffer size: " << sizeof(*buffer) << " MEmcpy: " << sizeof(FileEntry) * NUM_DIR_ENTRIES;
 
 
@@ -109,7 +116,7 @@ void RootDirectory::serialize(char *buffer){
 	return;
 }
 
-void RootDirectory::deserialize(char buffer[]){
-	memcpy(this->fileList, &buffer, sizeof(*buffer));
+void RootDirectory::deserialize(char* buffer){
+	memcpy(this->fileList, buffer, FILE_ENTRY_SIZE * NUM_DIR_ENTRIES);
 	return;
 }
