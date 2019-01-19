@@ -51,13 +51,12 @@ int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
     	LOG("Return getAttr of root");
     	struct timeval tv;
     	gettimeofday(&tv,nullptr);
-    	statbuf->st_atim.tv_sec = tv.tv_sec;
-    	statbuf->st_ctim.tv_sec = tv.tv_sec;
-    	statbuf->st_mtim.tv_sec = tv.tv_sec;
+    	statbuf->st_atime = time(NULL);
+    	statbuf->st_mtime = time(NULL);
     	statbuf->st_mode = S_IFDIR | 0755;
-    	statbuf->st_nlink = 1;
-    	statbuf->st_size = (size_t) DATA_BLOCKS * BLOCK_SIZE;
-    	statbuf->st_blocks = DATA_BLOCKS; //round up
+    	statbuf->st_nlink = 2;
+    	//statbuf->st_size = (size_t) DATA_BLOCKS * BLOCK_SIZE;
+    	//statbuf->st_blocks = DATA_BLOCKS; //round up
     	statbuf->st_gid = getgid();
     	statbuf->st_uid = getuid();
     	RETURN(0);
@@ -68,8 +67,9 @@ int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
     	statbuf->st_atim.tv_sec = fe.atime;
     	statbuf->st_ctim.tv_sec = fe.ctime;
     	statbuf->st_mtim.tv_sec = fe.mtime;
-    	statbuf->st_mode = fe.mode;
+    	statbuf->st_mode = S_IFREG | fe.mode;
     	statbuf->st_size = (size_t) fe.sizeOfFile;
+    	statbuf->st_nlink = 1;
     	statbuf->st_blocks = (fe.sizeOfFile + BLOCK_SIZE - 1) / BLOCK_SIZE; //round up
     	statbuf->st_gid = fe.gid;
     	statbuf->st_uid = fe.uid;
@@ -195,6 +195,7 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
     		else{
     			// TODO: iterate through fat until offset is reached to open read next block
     			blockNo = 0;
+    			//set cache->blockRead to index of current block (not address!)
     		}
     		bd->read(blockNo, cache->data);
 
@@ -285,28 +286,25 @@ int MyFS::fuseOpendir(const char *path, struct fuse_file_info *fileInfo) {
 int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
     
+    if(strcmp(path, "/") != 0){
+    	LOG("path is not at dir");
+    	RETURN(-ENOTDIR);
+    }
+
+
     filler(buf, ".", NULL, 0); //add self directory
     filler(buf, "..", NULL, 0); //add top directory
 
-    if(strcmp(path, "/") == 0){
-    	/*FileEntry fes[NUM_DIR_ENTRIES];
-    	rd->getAllFiles(fes); */
-    	for(int i = 0; i < NUM_DIR_ENTRIES; i++){
-    		//LOGF("files found: %s", this->rd->fileList[i].filename);
-    		if(strcmp(this->rd->fileList[i].filename, "\0") != 0 && this->rd->fileList[i].firstBlock != 0){
-    			LOGF("Read Dir Entry: %s", this->rd->fileList[i].filename);
-    			/*struct stat s;
-    			s.st_atim.tv_sec = this->rd->fileList[i].atime;
-    			s.st_ctim.tv_sec = this->rd->fileList[i].ctime;
-    			s.st_mtim.tv_sec = this->rd->fileList[i].mtime;
-    			s.st_mode = this->rd->fileList[i].mode;
-    			s.st_size = (size_t) this->rd->fileList[i].sizeOfFile;
-    			s.st_blocks = (this->rd->fileList[i].sizeOfFile + BLOCK_SIZE - 1) / BLOCK_SIZE; //round up
-    			s.st_gid = this->rd->fileList[i].gid;
-    			s.st_uid = this->rd->fileList[i].uid;
+    LOGF("Root-Dir %s files: ", path);
 
-    			const struct stat *x = &s;*/
-    			filler(buf, this->rd->fileList[i].filename, NULL, 0);
+    if(strcmp(path, "/") == 0){
+    	for(int i = 0; i < NUM_DIR_ENTRIES; i++){
+    		if(strcmp(this->rd->fileList[i].filename, "\0") != 0 && this->rd->fileList[i].firstBlock != 0){
+    			const char *file = this->rd->fileList[i].filename;
+    			file++;
+    			filler(buf, file, NULL, 0);
+
+    			LOGF("Read Dir Entry: %s", file);
     		}
     	}
     	RETURN(0);
