@@ -239,7 +239,7 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     // 		when physical block is found, write buf to BlockDevice using offset % BLOCK_SIZE and size
     uint16_t blockCount = firstBlock;
     uint16_t currentBlock = firstBlock;
-    while(blockCount =< blockNo)
+    while(blockCount <= blockNo)
     {
     	if (this->sb->findNextBlock(currentBlock) == 0)
     	{
