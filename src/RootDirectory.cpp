@@ -64,7 +64,7 @@ int RootDirectory::addEntry(const char* path, uint16_t firstblock, uint32_t size
 		if (this->fileList[i].firstBlock == 0) {
 			this->fileList[i] = *newEntry;
 			i = NUM_DIR_ENTRIES +1;
-			return 1;
+			return 0;
 		}
 	}
 
@@ -98,7 +98,7 @@ int RootDirectory::removeEntry(const char* path){
 	for(int i = 0; i < NUM_DIR_ENTRIES; i++) {
 		if(strcmp(this->fileList[i].filename, path) == 0){
 			this->fileList[i] = *empty;
-			return 1;
+			return 0;
 		}
 	}
 	return -(ENOENT);

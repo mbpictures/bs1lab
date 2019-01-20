@@ -89,10 +89,13 @@ int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     int firstBlock = this->sb->findFreeBlock();
     this->sb->markBlock(firstBlock, 0);
     this->sb->setNextBlock(firstBlock, -1);
+    LOG("Test");
     int sizeOfFile = 0;
     int status = this->rd->addEntry(path, firstBlock, sizeOfFile, mode, getuid(), getgid());
+    LOG("Test2");
     
     this->serializeControlStructures();
+    LOG("Test3");
 
     RETURN(status);
 }
@@ -249,9 +252,6 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
 
     this->rd->setSizeOfFile(index, size + offset);
 
-    //TODO: iterate through fat until blockNo is reached, if file doesn't have blockNo blocks,
-    // 		allocate more blocks using fat and dmap
-    // 		when physical block is found, write buf to BlockDevice using offset % BLOCK_SIZE and size
     uint16_t blockCount = 0;
     uint16_t currentBlock = firstBlock;
     while(blockCount < blockNo)
