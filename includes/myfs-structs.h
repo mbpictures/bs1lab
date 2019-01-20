@@ -23,6 +23,7 @@
 #define ROOT_START_BLOCK 384 //sizeof(RootDirectory) = 36 blocks or 18,432 byte
 #define DATA_START_BLOCK 420
 
+// TODO: Add structures of your file system here
 typedef struct {
 	char filename[NAME_LENGTH];
 	uint8_t uid;
@@ -40,7 +41,5 @@ typedef struct {
 	int blockRead;
 	char data[BLOCK_SIZE];
 }BlockCache;
-
-// TODO: Add structures of your file system here
 
 #endif /* myfs_structs_h */

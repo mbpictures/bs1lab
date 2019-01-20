@@ -50,7 +50,7 @@ int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
     if(strcmp(path, "/") == 0){ //getAttr of Root path
     	LOG("Return getAttr of root");
     	struct timeval tv;
-    	gettimeofday(&tv,nullptr);
+    	gettimeofday(&tv,NULL);
     	statbuf->st_atime = time(NULL);
     	statbuf->st_mtime = time(NULL);
     	statbuf->st_mode = S_IFDIR | 0755;
@@ -86,7 +86,7 @@ int MyFS::fuseReadlink(const char *path, char *link, size_t size) {
 
 int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     LOGM();
-    int firstBlock = 0; // TODO: find free block in dmap
+    int firstBlock = this->sb->findFreeBlock();
     int sizeOfFile = 0;
     int status = this->rd->addEntry(path, firstBlock, sizeOfFile, mode, getuid(), getgid());
     
@@ -108,8 +108,16 @@ int MyFS::fuseUnlink(const char *path) {
     }
     FileEntry fe = this->rd->getEntry(index);
     uint16_t firstBlock = fe.firstBlock;
-    this->sb->markBlock(firstBlock, 0);
-    // TODO: mark all blocks of file as FREE & clean fat for this file
+    uint16_t currentBlock;
+    uint16_t nextBlock = this->sb->findNextBlock(firstBlock);
+    do
+    {
+    	this->sb->setNextBlock(currentBlock, 0);
+    	this->sb->markBlock(currentBlock, 1);
+    	currentBlock = nextBlock;
+    	nextBlock = this->sb->findNextBlock(currentBlock);
+    }while(nextBlock != 0);
+
     int status = this->rd->removeEntry(path);
     
     this->serializeControlStructures();
@@ -191,12 +199,16 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
     		u_int32_t blockNo = 0;
     		if(cache->blockRead == -1){
     			blockNo = (u_int32_t) cache->fe.firstBlock;
+    			cache->blockRead = 0;
     		}
-    		else{
-    			// TODO: iterate through fat until offset is reached to open read next block
-    			blockNo = 0;
-    			//set cache->blockRead to index of current block (not address!)
+    		// TODO: iterate through fat until offset is reached to open read next block
+    		while ((offset/BLOCK_SIZE) != cache->blockRead)
+    		{
+    			blockNo = this->sb->findNextBlock(blockNo);
+    			cache->blockRead = blockNo;
     		}
+    		//set cache->blockRead to index of current block (not address!)
+    		cache->blockRead = offset/BLOCK_SIZE;
     		bd->read(blockNo, cache->data);
 
     		int j = 0;
@@ -225,6 +237,19 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     //TODO: iterate through fat until blockNo is reached, if file doesn't have blockNo blocks,
     // 		allocate more blocks using fat and dmap
     // 		when physical block is found, write buf to BlockDevice using offset % BLOCK_SIZE and size
+    uint16_t blockCount = firstBlock;
+    uint16_t currentBlock = firstBlock;
+    while(blockCount =< blockNo)
+    {
+    	if (this->sb->findNextBlock(currentBlock) == 0)
+    	{
+    		this->sb->setNextBlock(currentBlock,this->sb->findFreeBlock());
+    		this->sb->markBlock(this->sb->findNextBlock(currentBlock), 0);
+    	}
+    	currentBlock = this->sb->findNextBlock(currentBlock);
+    	blockCount++;
+    }
+
 
 
     this->serializeControlStructures();

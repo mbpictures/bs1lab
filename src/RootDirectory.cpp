@@ -50,7 +50,7 @@ int RootDirectory::addEntry(const char* path, uint16_t firstblock, uint32_t size
 
 	newEntry->filename[258] = '\0';
 	struct timeval tv;
-	gettimeofday(&tv,nullptr);
+	gettimeofday(&tv,NULL);
 	newEntry->atime = (uint32_t) tv.tv_sec;
 	newEntry->ctime = (uint32_t) tv.tv_sec;
 	newEntry->mtime = (uint32_t) tv.tv_sec;
