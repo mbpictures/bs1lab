@@ -33,6 +33,8 @@ int main(int argc, char *argv[]) {
     rd->addEntry("/", 0, 0, 0444, getuid(), getgid());
     rd->addEntry("/.Trash", 0, 0, 0444, getuid(), getgid());
     rd->addEntry("/.Trash-1000", 0, 0, 0444, getuid(), getgid());
+
+    uint16_t nextBlock = 1;
     for(int i = 2; i < argc; i++){
 
     	int fd = open(argv[i], O_RDONLY); //open file for Read-Only
@@ -41,8 +43,7 @@ int main(int argc, char *argv[]) {
     	int sc = fstat(fd, &stat_buf);
     	uint32_t sizeOfFile = sc == 0 ? stat_buf.st_size : 0;
 
-    	uint16_t nextBlock = DATA_START_BLOCK;
-    	sb->markBlock(nextBlock, true);
+    	sb->markBlock(nextBlock, 0);
 
     	size_t filenameLength = strlen(argv[i]);
     	char *filename = (char*) malloc(filenameLength + 1);
@@ -69,7 +70,7 @@ int main(int argc, char *argv[]) {
     			buf++;
     		}
 
-    		bd->write(nextBlock, writeBuf);
+    		bd->write(nextBlock + DATA_START_BLOCK -1, writeBuf);
     		nextBlock = nextBlockNew;
     	}
     }

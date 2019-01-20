@@ -199,10 +199,10 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
     		u_int32_t blockNo = 0;
     		if(cache->blockRead == -1){
     			blockNo = (u_int32_t) cache->fe.firstBlock;
-    			this->bd->read(blockNo, cache->data);
+    			this->bd->read(blockNo + DATA_START_BLOCK -1, cache->data);
     			cache->blockRead = 0;
     		}
-    		// TODO: iterate through fat until offset is reached to open read next block
+
     		bool loadFile = false;
     		while ((offset/BLOCK_SIZE) != cache->blockRead)
     		{
@@ -212,16 +212,16 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
 
     		if(loadFile == true){ //only read bd when it's not allready cached!
 				cache->blockRead = offset/BLOCK_SIZE;
-				bd->read(blockNo, cache->data);
+				bd->read(blockNo + DATA_START_BLOCK -1, cache->data);
     		}
 
     		int j = 0;
-    		int readIn = offset;
+    		int readIn = offset % BLOCK_SIZE;
     		while(j < (int) size){
     			if(cache->blockRead != ((offset + j) / BLOCK_SIZE)){
     				readIn = 0;
     				blockNo = this->sb->findNextBlock(blockNo);
-    				this->bd->read(blockNo, cache->data);
+    				this->bd->read(blockNo + DATA_START_BLOCK -1, cache->data);
     				cache->blockRead = ((offset + j) / BLOCK_SIZE);
     			}
 
@@ -229,12 +229,6 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
     			j++;
     			readIn++;
     		}
-
-    		//int j = 0;
-    		/*for(int i = ((int) offset / BLOCK_SIZE); i < (((int) offset / BLOCK_SIZE) + (int) size); i++){
-    			buf[j] = cache->data[i];
-    			j++;
-    		}*/
     		RETURN(j); //return the amount of read bytes
     	}
     }
@@ -429,11 +423,6 @@ void* MyFS::fuseInit(struct fuse_conn_info *conn) {
            	memcpy((bufferRD + (j * BLOCK_SIZE)), temp, BLOCK_SIZE);
         	j++;
         }
-        //bufferRD -= j * BLOCK_SIZE; //set pointer back to start of bufferRD
-
-        /*for(int i = 0; i < FILE_ENTRY_SIZE * NUM_DIR_ENTRIES; i++){
-        	LOGF("Buffer[%d]: %c", i, bufferRD[i]);
-        }*/
 
         this->rd->deserialize(bufferRD);
 
@@ -441,17 +430,18 @@ void* MyFS::fuseInit(struct fuse_conn_info *conn) {
         int size = (sizeof(uint16_t) * DATA_BLOCKS) + (sizeof(bool) * DATA_BLOCKS);
 
         char *bufferSB = new char[size];
+        int x = 0;
         for(int i = SUPERBLOCK_START_BLOCK; i < ROOT_START_BLOCK; i++){
-        	char *temp = new char[BLOCK_SIZE];
-        	bd->read(i, temp);
-        	strcat(bufferSB, temp);
+           	char *temp = new char[BLOCK_SIZE];
+           	this->bd->read(i, temp);
+           	memcpy((bufferSB + (x * BLOCK_SIZE)), temp, BLOCK_SIZE);
+           	x++;
         }
-        //bufferSB -= size;
         this->sb->deserialize(bufferSB);
 
         //just read first entry for test. SPOILER: doesn't work
-        int index = this->rd->searchEntry("/README.md", getuid(), getgid());
-        LOGF("index: %d", index);
+        int nextForTest = this->sb->findNextBlock(2);
+        LOGF("Fat[2]: %d", nextForTest);
    }
     
     RETURN(0);
