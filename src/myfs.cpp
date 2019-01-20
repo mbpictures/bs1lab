@@ -192,30 +192,49 @@ int MyFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
 int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
     
-    LOGF("BlockCache: %d", (int) fileInfo->fh);
+    LOGF("BlockCache: %d", (unsigned long int) fileInfo->fh);
     if(fileInfo->fh != 0){
     	BlockCache *cache = (BlockCache*) fileInfo->fh;
     	if(strcmp(cache->fe.filename, path) == 0){
     		u_int32_t blockNo = 0;
     		if(cache->blockRead == -1){
     			blockNo = (u_int32_t) cache->fe.firstBlock;
+    			this->bd->read(blockNo, cache->data);
     			cache->blockRead = 0;
     		}
     		// TODO: iterate through fat until offset is reached to open read next block
+    		bool loadFile = false;
     		while ((offset/BLOCK_SIZE) != cache->blockRead)
     		{
+    			loadFile = true;
     			blockNo = this->sb->findNextBlock(blockNo);
-    			cache->blockRead = blockNo;
     		}
-    		//set cache->blockRead to index of current block (not address!)
-    		cache->blockRead = offset/BLOCK_SIZE;
-    		bd->read(blockNo, cache->data);
+
+    		if(loadFile == true){ //only read bd when it's not allready cached!
+				cache->blockRead = offset/BLOCK_SIZE;
+				bd->read(blockNo, cache->data);
+    		}
 
     		int j = 0;
-    		for(int i = ((int) offset / BLOCK_SIZE); i <= (((int) offset / BLOCK_SIZE) + (int) size); i++){
+    		int readIn = offset;
+    		while(j < (int) size){
+    			if(cache->blockRead != ((offset + j) / BLOCK_SIZE)){
+    				readIn = 0;
+    				blockNo = this->sb->findNextBlock(blockNo);
+    				this->bd->read(blockNo, cache->data);
+    				cache->blockRead = ((offset + j) / BLOCK_SIZE);
+    			}
+
+    			buf[j] = cache->data[readIn];
+    			j++;
+    			readIn++;
+    		}
+
+    		//int j = 0;
+    		/*for(int i = ((int) offset / BLOCK_SIZE); i < (((int) offset / BLOCK_SIZE) + (int) size); i++){
     			buf[j] = cache->data[i];
     			j++;
-    		}
+    		}*/
     		RETURN(j); //return the amount of read bytes
     	}
     }
