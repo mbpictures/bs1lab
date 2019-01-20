@@ -23,8 +23,8 @@ Finde den n?chsten freien Block in der DMap und gib die Adresse dessen zur?ck.
 */
 uint16_t Superblock::findFreeBlock()
 {
-	uint8_t i = 1;
-	while (DMap[i])
+	uint16_t i = 1;
+	while (!DMap[i])
 	{
 		i++;
 	}

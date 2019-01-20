@@ -22,6 +22,7 @@ class RootDirectory {
 		int searchEntry(const char* path, uint8_t uid, uint8_t gid);
 		FileEntry getEntry(int index);
 		int removeEntry(const char* path);
+		void setSizeOfFile(int index, uint32_t size);
 		void getAllFiles(FileEntry *fes);
 		void serialize(char *buffer);
 		void deserialize(char buffer[]);

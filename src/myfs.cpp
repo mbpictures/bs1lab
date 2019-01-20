@@ -87,6 +87,8 @@ int MyFS::fuseReadlink(const char *path, char *link, size_t size) {
 int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     LOGM();
     int firstBlock = this->sb->findFreeBlock();
+    this->sb->markBlock(firstBlock, 0);
+    this->sb->setNextBlock(firstBlock, -1);
     int sizeOfFile = 0;
     int status = this->rd->addEntry(path, firstBlock, sizeOfFile, mode, getuid(), getgid());
     
@@ -108,7 +110,7 @@ int MyFS::fuseUnlink(const char *path) {
     }
     FileEntry fe = this->rd->getEntry(index);
     uint16_t firstBlock = fe.firstBlock;
-    uint16_t currentBlock;
+    uint16_t currentBlock = firstBlock;
     uint16_t nextBlock = this->sb->findNextBlock(firstBlock);
     do
     {
@@ -240,34 +242,58 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     LOGM();
     
     
-    uint16_t blockNo = (offset + BLOCK_SIZE - 1) / BLOCK_SIZE; //BlockNo to write. 1 = write first block of device, or write nth block of file
-    if(blockNo); //remove
+    uint16_t blockNo = (offset + size + BLOCK_SIZE - 1) / BLOCK_SIZE; //BlockNo to write. 1 = write first block of device, or write nth block of file
     int index = this->rd->searchEntry(path, getuid(), getgid());
     FileEntry fe = this->rd->getEntry(index);
     uint16_t firstBlock = fe.firstBlock;
-    if(firstBlock); //remove
+
+    this->rd->setSizeOfFile(index, size + offset);
 
     //TODO: iterate through fat until blockNo is reached, if file doesn't have blockNo blocks,
     // 		allocate more blocks using fat and dmap
     // 		when physical block is found, write buf to BlockDevice using offset % BLOCK_SIZE and size
-    uint16_t blockCount = firstBlock;
+    uint16_t blockCount = 0;
     uint16_t currentBlock = firstBlock;
-    while(blockCount <= blockNo)
+    while(blockCount < blockNo)
     {
     	if (this->sb->findNextBlock(currentBlock) == 0)
     	{
-    		this->sb->setNextBlock(currentBlock,this->sb->findFreeBlock());
-    		this->sb->markBlock(this->sb->findNextBlock(currentBlock), 0);
+    		uint16_t nextBlock = this->sb->findFreeBlock();
+    		this->sb->setNextBlock(currentBlock,nextBlock);
+    		this->sb->markBlock(nextBlock, 0);
+    		LOGF("Allocate more space in block: %d", nextBlock);
     	}
     	currentBlock = this->sb->findNextBlock(currentBlock);
     	blockCount++;
     }
 
+    //write data
+    char *bufferWrite = new char[BLOCK_SIZE];
+    this->bd->read(firstBlock + (offset / BLOCK_SIZE), bufferWrite);
+    currentBlock = firstBlock;
+    int j = 0;
+    int readIn = offset % BLOCK_SIZE;
+    while(j < (int) size){
+    	if(readIn == (BLOCK_SIZE-1)){
+    		this->bd->write(currentBlock + DATA_START_BLOCK - 1, bufferWrite);
+    		LOGF("Write Block: %d",currentBlock + DATA_START_BLOCK - 1);
+    		readIn = 0;
+    		currentBlock = this->sb->findNextBlock(currentBlock);
+    		this->bd->read(currentBlock + DATA_START_BLOCK -1, bufferWrite);
+    	}
+
+    	bufferWrite[readIn] = buf[j];
+ 		j++;
+ 		readIn++;
+ 	}
+
+    this->bd->write(currentBlock + DATA_START_BLOCK - 1, bufferWrite);
+    LOGF("Write Block (last): %d",currentBlock + DATA_START_BLOCK - 1);
 
 
     this->serializeControlStructures();
 
-    RETURN(0);
+    RETURN(j);
 }
 
 int MyFS::fuseStatfs(const char *path, struct statvfs *statInfo) {

@@ -104,6 +104,10 @@ int RootDirectory::removeEntry(const char* path){
 	return -(ENOENT);
 }
 
+void RootDirectory::setSizeOfFile(int index, uint32_t size){
+	this->fileList[index].sizeOfFile = size;
+}
+
 void RootDirectory::getAllFiles(FileEntry fes[]){
 	fes = this->fileList;
 }
