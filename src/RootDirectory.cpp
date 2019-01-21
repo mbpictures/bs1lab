@@ -30,7 +30,7 @@ int RootDirectory::addEntry(const char* path, uint16_t firstblock, uint32_t size
 	//Remove Path information of filepath
 	char *escapedpath = strrchr(strdup(path), '/');
 	if(escapedpath == 0){
-		char *newEscaped = new char[strlen(path) + 1];
+		char *newEscaped = new char[strlen(path) + 2];
 		strcpy(newEscaped, "/");
 		strcat(newEscaped, path);
 		escapedpath = newEscaped;
