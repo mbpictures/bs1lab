@@ -38,7 +38,7 @@ MyFS::MyFS() {
 }
 
 MyFS::~MyFS() {
-	this->serializeControlStructures();
+	this->serializeDataStructures();
 	delete rd;
 	delete sb;
 	delete bd;
@@ -94,7 +94,7 @@ int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     int status = this->rd->addEntry(path, firstBlock, sizeOfFile, mode, getuid(), getgid());
     LOG("Test2");
     
-    this->serializeControlStructures();
+    this->serializeDataStructures();
     LOG("Test3");
 
     RETURN(status);
@@ -125,7 +125,7 @@ int MyFS::fuseUnlink(const char *path) {
 
     int status = this->rd->removeEntry(path);
     
-    this->serializeControlStructures();
+    this->serializeDataStructures();
 
     RETURN(status);
 }
@@ -298,7 +298,7 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     LOGF("Write Block (last): %d",currentWriteBlock + DATA_START_BLOCK - 1);
 
 
-    this->serializeControlStructures();
+    this->serializeDataStructures();
 
     RETURN(j);
 }
@@ -499,7 +499,7 @@ int MyFS::fuseGetxattr(const char *path, const char *name, char *value, size_t s
 }
         
 // TODO: Add your own additional methods here!
-void MyFS::serializeControlStructures(){
+void MyFS::serializeDataStructures(){
 	LOGM();
 	//write RootDirectory to Blockdevice
 	char *buffer = new char[sizeof(FileEntry) * NUM_DIR_ENTRIES];

@@ -81,7 +81,7 @@ public:
     void fuseDestroy();
     
     // TODO: Add methods of your file system here
-    void serializeControlStructures();
+    void serializeDataStructures();
     
 };
 
