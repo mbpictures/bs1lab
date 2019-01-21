@@ -503,18 +503,18 @@ void MyFS::serializeDataStructures(){
 	char *bufferRD = new char[sizeof(FileEntry) * NUM_DIR_ENTRIES];
 	this->rd->serialize(bufferRD);
 
-	int j = 0;
+	int x = 0;
 	for(int i = ROOT_START_BLOCK; i < DATA_START_BLOCK; i++){
 	  	char writeBuf[BLOCK_SIZE];
-	   	for(int i = 0; i < BLOCK_SIZE; i++){
-	   		writeBuf[i] = *bufferRD;
-	   		j++;
+	   	for(int j = 0; j < BLOCK_SIZE; j++){
+	   		writeBuf[j] = *bufferRD;
+	   		x++;
 	   		bufferRD++;
 	   	}
 	  	this->bd->write(i, writeBuf);
 	}
 
-	bufferRD -= j;
+	bufferRD -= x;
 	/*for(int i = 0; i < sizeof(FileEntry) * NUM_DIR_ENTRIES; i++){
 
 	}*/
@@ -524,17 +524,17 @@ void MyFS::serializeDataStructures(){
 	//write Superblock to Blockdevice
 	char *bufferSB = new char[(ROOT_START_BLOCK -1) * BLOCK_SIZE];
 	this->sb->serialize(bufferSB);
-	j = 0;
+	x = 0;
 	for(int i = SUPERBLOCK_START_BLOCK; i < ROOT_START_BLOCK; i++){
 	   	char writeBuf[BLOCK_SIZE];
-	   	for(int i = 0; i < BLOCK_SIZE; i++){
-	   		writeBuf[i] = *bufferSB;
+	   	for(int j = 0; j < BLOCK_SIZE; j++){
+	   		writeBuf[j] = *bufferSB;
 	   		bufferSB++;
-	   		j++;
+	   		x++;
 	   	}
 	   	bd->write(i, writeBuf);
 	}
-	bufferSB -= j;
+	bufferSB -= x;
 
 	delete[] bufferSB;
 	LOG("Serialized SB");
