@@ -1,5 +1,8 @@
 obj
 *.bin
+*.mp4
+*.mp3
+*.pdf
 mkfs.myfs
 mount.myfs
 .project
