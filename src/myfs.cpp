@@ -30,7 +30,7 @@ MyFS* MyFS::Instance() {
 }
 
 MyFS::MyFS() {
-	this->rd = new RootDirectory;
+	this->rd = new RootDirectory();
     this->logFile= stderr;
     this->openedFiles = 0;
     this->bd = new BlockDevice();
@@ -42,6 +42,7 @@ MyFS::~MyFS() {
 	delete rd;
 	delete sb;
 	delete bd;
+	delete _instance;
 }
 
 int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
@@ -421,6 +422,7 @@ int MyFS::fuseCreate(const char *path, mode_t mode, struct fuse_file_info *fileI
 }
 
 void MyFS::fuseDestroy() {
+
     LOGM();
 }
 
@@ -452,7 +454,8 @@ void* MyFS::fuseInit(struct fuse_conn_info *conn) {
         	char *temp = new char[BLOCK_SIZE];
         	this->bd->read(i, temp);
            	memcpy((bufferRD + (j * BLOCK_SIZE)), temp, BLOCK_SIZE);
-        	j++;
+           	j++;
+           	delete [] temp;
         }
 
         this->rd->deserialize(bufferRD);
@@ -467,12 +470,16 @@ void* MyFS::fuseInit(struct fuse_conn_info *conn) {
            	this->bd->read(i, temp);
            	memcpy((bufferSB + (x * BLOCK_SIZE)), temp, BLOCK_SIZE);
            	x++;
+           	delete [] temp;
         }
         this->sb->deserialize(bufferSB);
 
         //just read first entry for test. SPOILER: doesn't work
         int nextForTest = this->sb->findNextBlock(2);
         LOGF("Fat[2]: %d", nextForTest);
+
+        delete [] bufferRD;
+        delete [] bufferSB;
    }
     
     RETURN(0);
@@ -518,7 +525,6 @@ void MyFS::serializeDataStructures(){
 	/*for(int i = 0; i < sizeof(FileEntry) * NUM_DIR_ENTRIES; i++){
 
 	}*/
-	delete[] bufferRD;
 	LOG("Serialized RD");
 
 	//write Superblock to Blockdevice
@@ -536,7 +542,8 @@ void MyFS::serializeDataStructures(){
 	}
 	bufferSB -= x;
 
-	delete[] bufferSB;
 	LOG("Serialized SB");
+	delete[] bufferRD;
+	delete[] bufferSB;
 }
 
