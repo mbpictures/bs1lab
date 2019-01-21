@@ -201,9 +201,9 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
     if(fileInfo->fh != 0){
     	BlockCache *cache = (BlockCache*) fileInfo->fh;
     	if(strcmp(cache->fe.filename, path) == 0){
-    		u_int32_t blockNo = 0;
+    		uint32_t blockNo = 0;
     		if(cache->blockRead == -1){
-    			blockNo = (u_int32_t) cache->fe.firstBlock;
+    			blockNo = (uint32_t) cache->fe.firstBlock;
     			this->bd->read(blockNo + DATA_START_BLOCK -1, cache->data);
     			cache->blockRead = 0;
     		}
@@ -250,11 +250,14 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     FileEntry fe = this->rd->getEntry(index);
     uint16_t firstBlock = fe.firstBlock;
 
+    LOGF("Write file %s at offset %d with size %d", path, (int) offset, (int) size);
+
     this->rd->setSizeOfFile(index, size + offset);
 
     uint16_t blockCount = 0;
-    uint16_t currentBlock = firstBlock;
-    while(blockCount < blockNo)
+    uint32_t currentBlock = (uint32_t) firstBlock;
+    uint32_t currentWriteBlock = firstBlock;
+    while(blockCount <= blockNo)
     {
     	if (this->sb->findNextBlock(currentBlock) == 0)
     	{
@@ -263,23 +266,27 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     		this->sb->markBlock(nextBlock, 0);
     		LOGF("Allocate more space in block: %d", nextBlock);
     	}
+
     	currentBlock = this->sb->findNextBlock(currentBlock);
     	blockCount++;
+
+    	if(blockCount == (offset / BLOCK_SIZE)){
+    		currentWriteBlock = currentBlock;
+    	}
     }
 
     //write data
     char *bufferWrite = new char[BLOCK_SIZE];
-    this->bd->read(firstBlock + (offset / BLOCK_SIZE), bufferWrite);
-    currentBlock = firstBlock;
+    this->bd->read(currentWriteBlock + DATA_START_BLOCK - 1, bufferWrite);
     int j = 0;
     int readIn = offset % BLOCK_SIZE;
     while(j < (int) size){
     	if(readIn == (BLOCK_SIZE-1)){
-    		this->bd->write(currentBlock + DATA_START_BLOCK - 1, bufferWrite);
-    		LOGF("Write Block: %d",currentBlock + DATA_START_BLOCK - 1);
+    		this->bd->write(currentWriteBlock + DATA_START_BLOCK - 1, bufferWrite);
+    		LOGF("Write Block: %d",currentWriteBlock + DATA_START_BLOCK - 1);
     		readIn = 0;
-    		currentBlock = this->sb->findNextBlock(currentBlock);
-    		this->bd->read(currentBlock + DATA_START_BLOCK -1, bufferWrite);
+    		currentWriteBlock = this->sb->findNextBlock(currentWriteBlock);
+    		this->bd->read(currentWriteBlock + DATA_START_BLOCK -1, bufferWrite);
     	}
 
     	bufferWrite[readIn] = buf[j];
@@ -287,8 +294,8 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
  		readIn++;
  	}
 
-    this->bd->write(currentBlock + DATA_START_BLOCK - 1, bufferWrite);
-    LOGF("Write Block (last): %d",currentBlock + DATA_START_BLOCK - 1);
+    this->bd->write(currentWriteBlock + DATA_START_BLOCK - 1, bufferWrite);
+    LOGF("Write Block (last): %d",currentWriteBlock + DATA_START_BLOCK - 1);
 
 
     this->serializeControlStructures();
@@ -493,6 +500,7 @@ int MyFS::fuseGetxattr(const char *path, const char *name, char *value, size_t s
         
 // TODO: Add your own additional methods here!
 void MyFS::serializeControlStructures(){
+	LOGM();
 	//write RootDirectory to Blockdevice
 	char *buffer = new char[sizeof(FileEntry) * NUM_DIR_ENTRIES];
 	this->rd->serialize(buffer);
@@ -505,6 +513,7 @@ void MyFS::serializeControlStructures(){
 	   	}
 	  	this->bd->write(i, writeBuf);
 	}
+	LOG("Serialized RD");
 
 	//write Superblock to Blockdevice
 	char *bufferSB = new char[(ROOT_START_BLOCK -1) * BLOCK_SIZE];
@@ -517,5 +526,7 @@ void MyFS::serializeControlStructures(){
 	   	}
 	   	bd->write(i, writeBuf);
 	}
+
+	LOG("Serialized SB");
 }
 
