@@ -264,7 +264,6 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     		uint16_t nextBlock = this->sb->findFreeBlock();
     		this->sb->setNextBlock(currentBlock,nextBlock);
     		this->sb->markBlock(nextBlock, 0);
-    		LOGF("Allocate more space in block: %d", nextBlock);
     	}
 
     	currentBlock = this->sb->findNextBlock(currentBlock);
@@ -283,7 +282,6 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     while(j < (int) size){
     	if(readIn == (BLOCK_SIZE-1)){
     		this->bd->write(currentWriteBlock + DATA_START_BLOCK - 1, bufferWrite);
-    		LOGF("Write Block: %d",currentWriteBlock + DATA_START_BLOCK - 1);
     		readIn = 0;
     		currentWriteBlock = this->sb->findNextBlock(currentWriteBlock);
     		this->bd->read(currentWriteBlock + DATA_START_BLOCK -1, bufferWrite);
@@ -298,7 +296,7 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     LOGF("Write Block (last): %d",currentWriteBlock + DATA_START_BLOCK - 1);
 
 
-    this->serializeDataStructures();
+    //this->serializeDataStructures();
 
     RETURN(j);
 }
@@ -502,31 +500,43 @@ int MyFS::fuseGetxattr(const char *path, const char *name, char *value, size_t s
 void MyFS::serializeDataStructures(){
 	LOGM();
 	//write RootDirectory to Blockdevice
-	char *buffer = new char[sizeof(FileEntry) * NUM_DIR_ENTRIES];
-	this->rd->serialize(buffer);
+	char *bufferRD = new char[sizeof(FileEntry) * NUM_DIR_ENTRIES];
+	this->rd->serialize(bufferRD);
 
+	int j = 0;
 	for(int i = ROOT_START_BLOCK; i < DATA_START_BLOCK; i++){
 	  	char writeBuf[BLOCK_SIZE];
 	   	for(int i = 0; i < BLOCK_SIZE; i++){
-	   		writeBuf[i] = *buffer;
-	   		buffer++;
+	   		writeBuf[i] = *bufferRD;
+	   		j++;
+	   		bufferRD++;
 	   	}
 	  	this->bd->write(i, writeBuf);
 	}
+
+	bufferRD -= j;
+	/*for(int i = 0; i < sizeof(FileEntry) * NUM_DIR_ENTRIES; i++){
+
+	}*/
+	delete[] bufferRD;
 	LOG("Serialized RD");
 
 	//write Superblock to Blockdevice
 	char *bufferSB = new char[(ROOT_START_BLOCK -1) * BLOCK_SIZE];
 	this->sb->serialize(bufferSB);
+	j = 0;
 	for(int i = SUPERBLOCK_START_BLOCK; i < ROOT_START_BLOCK; i++){
 	   	char writeBuf[BLOCK_SIZE];
 	   	for(int i = 0; i < BLOCK_SIZE; i++){
 	   		writeBuf[i] = *bufferSB;
 	   		bufferSB++;
+	   		j++;
 	   	}
 	   	bd->write(i, writeBuf);
 	}
+	bufferSB -= j;
 
+	delete[] bufferSB;
 	LOG("Serialized SB");
 }
 
