@@ -23,6 +23,9 @@
 #define ROOT_START_BLOCK 384 //sizeof(RootDirectory) = 36 blocks or 18,432 byte
 #define DATA_START_BLOCK 420
 
+#define DMAP_SIZE 65536
+#define FAT_SIZE 65536
+
 // TODO: Add structures of your file system here
 typedef struct {
 	char filename[NAME_LENGTH];

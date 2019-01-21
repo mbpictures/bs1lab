@@ -3,15 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "myfs-structs.h"
 
 #ifndef Superblock_h
 #define Superblock_h
-
-#define OFFSET_ROOT 272
-#define OFFSET_DATA 4880
-#define OFFSET_ENDOFDATA 70416
-#define DMAP_SIZE 65536
-#define FAT_SIZE 65536
 
 class Superblock {
 

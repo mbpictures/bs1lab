@@ -30,9 +30,11 @@ int main(int argc, char *argv[]) {
     rd->init();
 
     //add defaults to root directory
+    /*
     rd->addEntry("/", 0, 0, 0444, getuid(), getgid());
     rd->addEntry("/.Trash", 0, 0, 0444, getuid(), getgid());
     rd->addEntry("/.Trash-1000", 0, 0, 0444, getuid(), getgid());
+	*/
 
     uint16_t nextBlock = 1;
     for(int i = 2; i < argc; i++){

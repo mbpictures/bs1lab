@@ -66,8 +66,8 @@ sequentiell in den Buffer, welcher anschlie?end geschrieben werden kann.
 */
 void Superblock::serialize(char* buffer)
 {
-	memcpy(buffer, this->DMap, DMAP_SIZE);
-	memcpy(buffer + DMAP_SIZE, this->FAT, FAT_SIZE);
+	memcpy(buffer, this->DMap, sizeof(bool) * DMAP_SIZE);
+	memcpy(buffer + DMAP_SIZE, this->FAT, sizeof(uint16_t) * FAT_SIZE);
 }
 
 /*
@@ -75,6 +75,6 @@ Lese den Buffer ein und schreibe die einzelnen Elemente zur?ck in die Attribute 
 */
 void Superblock::deserialize(char* buffer)
 {
-	memcpy(this->DMap, buffer, DMAP_SIZE);
-	memcpy(this->FAT, buffer + DMAP_SIZE, FAT_SIZE);
+	memcpy(this->DMap, buffer, sizeof(bool) * DMAP_SIZE);
+	memcpy(this->FAT, buffer + DMAP_SIZE, sizeof(uint16_t) * FAT_SIZE);
 }
