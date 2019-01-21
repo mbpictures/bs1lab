@@ -38,6 +38,7 @@ MyFS::MyFS() {
 }
 
 MyFS::~MyFS() {
+	LOG("MyFS-Destruktor");
 	this->serializeDataStructures();
 	delete rd;
 	delete sb;
@@ -87,9 +88,9 @@ int MyFS::fuseReadlink(const char *path, char *link, size_t size) {
 
 int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     LOGM();
-    int firstBlock = this->sb->findFreeBlock();
+    uint16_t firstBlock = this->sb->findFreeBlock();
     this->sb->markBlock(firstBlock, 0);
-    this->sb->setNextBlock(firstBlock, -1);
+    this->sb->setNextBlock(firstBlock, 0);
     LOG("Test");
     int sizeOfFile = 0;
     int status = this->rd->addEntry(path, firstBlock, sizeOfFile, mode, getuid(), getgid());
@@ -423,6 +424,7 @@ int MyFS::fuseCreate(const char *path, mode_t mode, struct fuse_file_info *fileI
 
 void MyFS::fuseDestroy() {
 
+	LOG("Destroy");
     LOGM();
 }
 
@@ -528,7 +530,8 @@ void MyFS::serializeDataStructures(){
 	LOG("Serialized RD");
 
 	//write Superblock to Blockdevice
-	char *bufferSB = new char[(ROOT_START_BLOCK -1) * BLOCK_SIZE];
+	//char *bufferSB = new char[(ROOT_START_BLOCK -1) * BLOCK_SIZE];
+	char *bufferSB = new char[(sizeof(bool) * DMAP_SIZE) + (sizeof(uint16_t) * FAT_SIZE)];
 	this->sb->serialize(bufferSB);
 	x = 0;
 	for(int i = SUPERBLOCK_START_BLOCK; i < ROOT_START_BLOCK; i++){
