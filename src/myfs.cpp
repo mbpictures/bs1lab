@@ -72,7 +72,7 @@ int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
     	statbuf->st_mode = S_IFREG | fe.mode;
     	statbuf->st_size = (size_t) fe.sizeOfFile;
     	statbuf->st_nlink = 1;
-    	statbuf->st_blocks = (fe.sizeOfFile + BLOCK_SIZE - 1) / BLOCK_SIZE; //round up
+    	//statbuf->st_blocks = (fe.sizeOfFile + BLOCK_SIZE - 1) / BLOCK_SIZE; //round up
     	statbuf->st_gid = fe.gid;
     	statbuf->st_uid = fe.uid;
     	RETURN(0);
@@ -91,13 +91,11 @@ int MyFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     uint16_t firstBlock = this->sb->findFreeBlock();
     this->sb->markBlock(firstBlock, 0);
     this->sb->setNextBlock(firstBlock, 0);
-    LOG("Test");
+    LOGF("FirstBlock: %d", firstBlock);
     int sizeOfFile = 0;
     int status = this->rd->addEntry(path, firstBlock, sizeOfFile, mode, getuid(), getgid());
-    LOG("Test2");
     
     this->serializeDataStructures();
-    LOG("Test3");
 
     RETURN(status);
 }
@@ -203,11 +201,15 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
     if(fileInfo->fh != 0){
     	BlockCache *cache = (BlockCache*) fileInfo->fh;
     	if(strcmp(cache->fe.filename, path) == 0){
+
+    		LOGF("Read: %s at offset %d with size %d", path, (int) offset, (int) size);
+
     		uint32_t blockNo = 0;
     		if(cache->blockRead == -1){
     			blockNo = (uint32_t) cache->fe.firstBlock;
     			this->bd->read(blockNo + DATA_START_BLOCK -1, cache->data);
     			cache->blockRead = 0;
+    			LOG("Read in FirstBlock");
     		}
 
     		bool loadFile = false;
@@ -225,16 +227,18 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
     		int j = 0;
     		int readIn = offset % BLOCK_SIZE;
     		while(j < (int) size){
-    			if(cache->blockRead != ((offset + j) / BLOCK_SIZE)){
-    				readIn = 0;
-    				blockNo = this->sb->findNextBlock(blockNo);
-    				this->bd->read(blockNo + DATA_START_BLOCK -1, cache->data);
-    				cache->blockRead = ((offset + j) / BLOCK_SIZE);
-    			}
 
     			buf[j] = cache->data[readIn];
     			j++;
     			readIn++;
+
+    			if(cache->blockRead != ((offset + j) / BLOCK_SIZE)){ //&& readIn == (BLOCK_SIZE - 1)){
+    				readIn = 0;
+    			    blockNo = this->sb->findNextBlock(blockNo);
+    			    this->bd->read(blockNo + DATA_START_BLOCK -1, cache->data);
+    			    LOGF("Read Block: %d", blockNo + DATA_START_BLOCK -1);
+    			    cache->blockRead = (offset + j) / BLOCK_SIZE;
+    			}
     		}
     		RETURN(j); //return the amount of read bytes
     	}
@@ -282,21 +286,40 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     int j = 0;
     int readIn = offset % BLOCK_SIZE;
     while(j < (int) size){
-    	if(readIn == (BLOCK_SIZE-1)){
-    		this->bd->write(currentWriteBlock + DATA_START_BLOCK - 1, bufferWrite);
-    		readIn = 0;
-    		currentWriteBlock = this->sb->findNextBlock(currentWriteBlock);
-    		this->bd->read(currentWriteBlock + DATA_START_BLOCK -1, bufferWrite);
-    	}
-
     	bufferWrite[readIn] = buf[j];
+    	//LOGF("Write char: %s",buf[j]);
  		j++;
  		readIn++;
+
+ 		if(readIn == (BLOCK_SIZE)){
+ 		    this->bd->write(currentWriteBlock + DATA_START_BLOCK - 1, bufferWrite);
+ 		    readIn = 0;
+ 		    LOGF("Write Block: %d", currentWriteBlock + DATA_START_BLOCK - 1);
+ 		    LOGF("Write buffer: %s", bufferWrite);
+ 		    currentWriteBlock = this->sb->findNextBlock(currentWriteBlock);
+ 			this->bd->read(currentWriteBlock + DATA_START_BLOCK -1, bufferWrite);
+ 		}
  	}
 
-    this->bd->write(currentWriteBlock + DATA_START_BLOCK - 1, bufferWrite);
-    LOGF("Write Block (last): %d",currentWriteBlock + DATA_START_BLOCK - 1);
+ 	/*
+    int x = 0;
+    for(int i = 0; i < (((int) size + BLOCK_SIZE -1) / BLOCK_SIZE); i++){
 
+        char writeBuf[BLOCK_SIZE];
+        for(int j = 0; j < BLOCK_SIZE; j++){
+        	writeBuf[j] = *buf;
+        	buf++;
+        	x++;
+        }
+
+        bd->write(nextBlock + DATA_START_BLOCK -1, writeBuf);
+        LOGF("Write Block: %d", nextBlock + DATA_START_BLOCK -1);
+        nextBlock = this->sb->findNextBlock(nextBlock);
+    }
+	*/
+    /*this->bd->write(currentWriteBlock + DATA_START_BLOCK - 1, bufferWrite);
+    LOGF("Write Block (last): %d",currentWriteBlock + DATA_START_BLOCK - 1);
+	*/
 
     //this->serializeDataStructures();
 
