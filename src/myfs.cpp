@@ -235,6 +235,9 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
     			if(cache->blockRead != ((offset + j) / BLOCK_SIZE)){ //&& readIn == (BLOCK_SIZE - 1)){
     				readIn = 0;
     			    blockNo = this->sb->findNextBlock(blockNo);
+    			    /*if(blockNo == 0){ //quick and dirty fix
+    			    	RETURN(j);
+    			    }*/
     			    this->bd->read(blockNo + DATA_START_BLOCK -1, cache->data);
     			    LOGF("Read Block: %d", blockNo + DATA_START_BLOCK -1);
     			    cache->blockRead = (offset + j) / BLOCK_SIZE;
@@ -263,7 +266,7 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     uint16_t blockCount = 0;
     uint32_t currentBlock = (uint32_t) firstBlock;
     uint32_t currentWriteBlock = firstBlock;
-    while(blockCount <= blockNo)
+    while(blockCount < blockNo)
     {
     	if (this->sb->findNextBlock(currentBlock) == 0)
     	{
@@ -272,12 +275,13 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     		this->sb->markBlock(nextBlock, 0);
     	}
 
-    	currentBlock = this->sb->findNextBlock(currentBlock);
-    	blockCount++;
-
     	if(blockCount == (offset / BLOCK_SIZE)){
     		currentWriteBlock = currentBlock;
     	}
+
+    	currentBlock = this->sb->findNextBlock(currentBlock);
+    	blockCount++;
+
     }
 
     //write data
@@ -287,36 +291,19 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     int readIn = offset % BLOCK_SIZE;
     while(j < (int) size){
     	bufferWrite[readIn] = buf[j];
-    	//LOGF("Write char: %s",buf[j]);
  		j++;
  		readIn++;
 
  		if(readIn == (BLOCK_SIZE)){
  		    this->bd->write(currentWriteBlock + DATA_START_BLOCK - 1, bufferWrite);
  		    readIn = 0;
- 		    LOGF("Write Block: %d", currentWriteBlock + DATA_START_BLOCK - 1);
- 		    LOGF("Write buffer: %s", bufferWrite);
+ 		    //LOGF("Write Block: %d", currentWriteBlock + DATA_START_BLOCK - 1);
+ 		    //LOGF("Write buffer: %s", bufferWrite);
  		    currentWriteBlock = this->sb->findNextBlock(currentWriteBlock);
  			this->bd->read(currentWriteBlock + DATA_START_BLOCK -1, bufferWrite);
  		}
  	}
 
- 	/*
-    int x = 0;
-    for(int i = 0; i < (((int) size + BLOCK_SIZE -1) / BLOCK_SIZE); i++){
-
-        char writeBuf[BLOCK_SIZE];
-        for(int j = 0; j < BLOCK_SIZE; j++){
-        	writeBuf[j] = *buf;
-        	buf++;
-        	x++;
-        }
-
-        bd->write(nextBlock + DATA_START_BLOCK -1, writeBuf);
-        LOGF("Write Block: %d", nextBlock + DATA_START_BLOCK -1);
-        nextBlock = this->sb->findNextBlock(nextBlock);
-    }
-	*/
     /*this->bd->write(currentWriteBlock + DATA_START_BLOCK - 1, bufferWrite);
     LOGF("Write Block (last): %d",currentWriteBlock + DATA_START_BLOCK - 1);
 	*/
