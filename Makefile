@@ -77,7 +77,8 @@ UNITTEST_OBJS = $(OBJDIR)/main.o \
 	$(OBJDIR)/test-blockdevice.o \
 	$(OBJDIR)/myfs.o \
 	$(OBJDIR)/test-myfs.o \
-	$(OBJDIR)/helper.o
+	$(OBJDIR)/helper.o \
+	$(OBJDIR)/test-superblock.o
 
 # test targets
 TTARGETS = unittests
