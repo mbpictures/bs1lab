@@ -297,7 +297,7 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
  		if(readIn == (BLOCK_SIZE) || j == size){
  		    this->bd->write(currentWriteBlock + DATA_START_BLOCK - 1, bufferWrite);
  		    readIn = 0;
- 		    //LOGF("Write Block: %d", currentWriteBlock + DATA_START_BLOCK - 1);
+ 		    LOGF("Write Block: %d", currentWriteBlock + DATA_START_BLOCK - 1);
  		    //LOGF("Write buffer: %s", bufferWrite);
  		    currentWriteBlock = this->sb->findNextBlock(currentWriteBlock);
  			this->bd->read(currentWriteBlock + DATA_START_BLOCK -1, bufferWrite);
