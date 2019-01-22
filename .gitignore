@@ -3,6 +3,7 @@ obj
 *.mp4
 *.mp3
 *.pdf
+*.txt
 mkfs.myfs
 mount.myfs
 .project
