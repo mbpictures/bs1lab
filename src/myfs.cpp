@@ -204,19 +204,20 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
 
     		LOGF("Read: %s at offset %d with size %d", path, (int) offset, (int) size);
 
-    		uint32_t blockNo = 0;
+    		uint32_t blockNo = (uint32_t) cache->fe.firstBlock;
     		if(cache->blockRead == -1){
-    			blockNo = (uint32_t) cache->fe.firstBlock;
     			this->bd->read(blockNo + DATA_START_BLOCK -1, cache->data);
     			cache->blockRead = 0;
     			LOG("Read in FirstBlock");
     		}
 
     		bool loadFile = false;
-    		while ((offset/BLOCK_SIZE) != cache->blockRead)
+    		int x = 0;
+    		while ((offset/BLOCK_SIZE) != x)
     		{
     			loadFile = true;
     			blockNo = this->sb->findNextBlock(blockNo);
+    			x++;
     		}
 
     		if(loadFile == true){ //only read bd when it's not allready cached!
