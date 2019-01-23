@@ -235,9 +235,6 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
     			if(cache->blockRead != ((offset + j) / BLOCK_SIZE)){ //&& readIn == (BLOCK_SIZE - 1)){
     				readIn = 0;
     			    blockNo = this->sb->findNextBlock(blockNo);
-    			    /*if(blockNo == 0){ //quick and dirty fix
-    			    	RETURN(j);
-    			    }*/
     			    this->bd->read(blockNo + DATA_START_BLOCK -1, cache->data);
     			    LOGF("Read Block: %d", blockNo + DATA_START_BLOCK -1);
     			    cache->blockRead = (offset + j) / BLOCK_SIZE;
@@ -304,11 +301,7 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
  		}
  	}
 
-    /*this->bd->write(currentWriteBlock + DATA_START_BLOCK - 1, bufferWrite);
-    LOGF("Write Block (last): %d",currentWriteBlock + DATA_START_BLOCK - 1);
-	*/
-
-    //this->serializeDataStructures();
+    this->serializeDataStructures();
 
     RETURN(j);
 }
@@ -392,10 +385,6 @@ int MyFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler, off_t
     }
     
     RETURN(-ENOENT);
-
-    
-
-    // <<< My new code
 }
 
 int MyFS::fuseReleasedir(const char *path, struct fuse_file_info *fileInfo) {
@@ -452,7 +441,7 @@ void* MyFS::fuseInit(struct fuse_conn_info *conn) {
         LOG("Starting logging...\n");
         LOGM();
         
-        // you can get the containfer file name here:
+        // you can get the container file name here:
         LOGF("Container file name: %s", ((MyFsInfo *) fuse_get_context()->private_data)->contFile);
         
         //open BlockDevice
@@ -485,10 +474,6 @@ void* MyFS::fuseInit(struct fuse_conn_info *conn) {
            	delete [] temp;
         }
         this->sb->deserialize(bufferSB);
-
-        //just read first entry for test. SPOILER: doesn't work
-        int nextForTest = this->sb->findNextBlock(2);
-        LOGF("Fat[2]: %d", nextForTest);
 
         delete [] bufferRD;
         delete [] bufferSB;
@@ -534,13 +519,9 @@ void MyFS::serializeDataStructures(){
 	}
 
 	bufferRD -= x;
-	/*for(int i = 0; i < sizeof(FileEntry) * NUM_DIR_ENTRIES; i++){
-
-	}*/
 	LOG("Serialized RD");
 
 	//write Superblock to Blockdevice
-	//char *bufferSB = new char[(ROOT_START_BLOCK -1) * BLOCK_SIZE];
 	char *bufferSB = new char[(sizeof(bool) * DMAP_SIZE) + (sizeof(uint16_t) * FAT_SIZE)];
 	this->sb->serialize(bufferSB);
 	x = 0;
