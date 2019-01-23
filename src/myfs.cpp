@@ -64,8 +64,9 @@ int MyFS::fuseGetattr(const char *path, struct stat *statbuf) {
     	RETURN(0);
     }
     int index = this->rd->searchEntry(path, getuid(), getgid());
-    if(index >= 0){
+    if(index >= 0){ //file found
     	FileEntry fe = this->rd->getEntry(index);
+    	//fill buffer
     	statbuf->st_atim.tv_sec = fe.atime;
     	statbuf->st_ctim.tv_sec = fe.ctime;
     	statbuf->st_mtim.tv_sec = fe.mtime;
@@ -174,7 +175,7 @@ int MyFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
 
     if(this->openedFiles == NUM_OPEN_FILES){
-    	LOG("to many files opened");
+    	LOG("too many files opened");
     	RETURN(-(ENFILE));
     }
 
@@ -220,7 +221,7 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
     			x++;
     		}
 
-    		if(loadFile == true){ //only read bd when it's not allready cached!
+    		if(loadFile == true){ //only read bd when it's not already cached!
 				cache->blockRead = offset/BLOCK_SIZE;
 				bd->read(blockNo + DATA_START_BLOCK -1, cache->data);
     		}
@@ -233,7 +234,7 @@ int MyFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struc
     			j++;
     			readIn++;
 
-    			if(cache->blockRead != ((offset + j) / BLOCK_SIZE)){ //&& readIn == (BLOCK_SIZE - 1)){
+    			if(cache->blockRead != ((offset + j) / BLOCK_SIZE)){ //reached end of block -> read next block
     				readIn = 0;
     			    blockNo = this->sb->findNextBlock(blockNo);
     			    this->bd->read(blockNo + DATA_START_BLOCK -1, cache->data);
@@ -266,6 +267,7 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     uint32_t currentWriteBlock = firstBlock;
     while(blockCount < blockNo)
     {
+    	//allocate more space
     	if (this->sb->findNextBlock(currentBlock) == 0)
     	{
     		uint16_t nextBlock = this->sb->findFreeBlock();
@@ -273,6 +275,7 @@ int MyFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset
     		this->sb->markBlock(nextBlock, 0);
     	}
 
+    	//set currentWriteBlock to current block where we wanna start to write
     	if(blockCount == (offset / BLOCK_SIZE)){
     		currentWriteBlock = currentBlock;
     	}
