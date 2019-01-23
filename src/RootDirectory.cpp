@@ -68,7 +68,7 @@ int RootDirectory::addEntry(const char* path, uint16_t firstblock, uint32_t size
 		}
 	}
 
-	return -(EIO);
+	return -(EIO); //no free entry in fileList left!
 	
 }
 

@@ -47,6 +47,7 @@ int main(int argc, char *argv[]) {
 
     	sb->markBlock(nextBlock, 0);
 
+    	//get Filename
     	size_t filenameLength = strlen(argv[i]);
     	char *filename = (char*) malloc(filenameLength + 1);
     	strcpy(filename, argv[i]);
