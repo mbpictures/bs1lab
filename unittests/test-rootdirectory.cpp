@@ -30,13 +30,13 @@ TEST_CASE("Werden Entries richtig hinzugefügt?", "[addEntry]")
 	ret = rd->addEntry("/somefile.txt", 3, 12, 0777, 125, 254);
 	FileEntry fe = rd->fileList[0];
 
-		if (!((fe.uid == 125) && (fe.gid == 254) && (fe.sizeOfFile == 12) &&(fe.mode == 0777) && (fe.firstBlock == 3) && !(strcmp(fe.filename, "/somefile.txt"))))
+		if (!((fe.uid == 125) && (fe.gid == 254) && (fe.sizeOfFile == 12) &&(fe.mode == 0777) && (fe.firstBlock == 3) && (strcmp(fe.filename, "/somefile.txt") == 0)))
 	{
 		odd = true;
 	}
 
-	REQUIRE((ret == 0));
-	REQUIRE((odd == false));
+	REQUIRE(ret == 0);
+	REQUIRE(odd == false);
 }
 
 TEST_CASE("Werden bestimmte Entries gefunden?", "[searchEntry]")
@@ -51,7 +51,7 @@ TEST_CASE("Werden bestimmte Entries gefunden?", "[searchEntry]")
 
 	ret = rd->searchEntry("/somefile.txt", 0, 0);
 
-	REQUIRE((ret == 3));
+	REQUIRE(ret == 3);
 }
 
 TEST_CASE("Wird die Dateigröße richtig gesetzt?", "[setSizeOfFile]")
@@ -68,7 +68,7 @@ TEST_CASE("Wird die Dateigröße richtig gesetzt?", "[setSizeOfFile]")
 		ret = true;
 	}
 
-	REQUIRE((ret == true));
+	REQUIRE(ret == true);
 }
 
 TEST_CASE("Werden alle vorhandene Entries gefunden?", "[getAllFiles]")
@@ -91,7 +91,7 @@ TEST_CASE("Werden alle vorhandene Entries gefunden?", "[getAllFiles]")
 		{
 			ret = true;
 		}
-		REQUIRE((ret == true));
+		REQUIRE(ret == true);
 	}
 }
 
@@ -108,21 +108,26 @@ TEST_CASE("Wir das RD richtig serialisiert und deserialisiert?", "[serialize/des
 
 	rd->serialize(buffer);
 
-	rd->addEntry("/soasdile.txt", 1, 1, 0777, 125, 254);
-	rd->addEntry("/somaeere.txt", 2, 1, 0777, 125, 254);
-	rd->addEntry("/somrere.txt", 3, 1, 0777, 125, 254);
-	rd->addEntry("/somefile.txt", 4, 12, 0777, 125, 254);
+	rd->addEntry("/soasssadile.txt", 1, 1, 0777, 125, 254);
+	rd->addEntry("/somrrgaeere.txt", 2, 1, 0777, 125, 254);
 
 	rd->deserialize(buffer);
 
-	for(int i = 0; i < 4; i++)
-	{
-		ret = false;
-		if(rd->fileList[i].filename != '\0')
-		{
-			ret = true;
-		}
-		REQUIRE(ret == true);
-	}
-	REQUIRE((rd->fileList[4].filename == '\0') == true);
+	ret = rd->searchEntry("/soasdile.txt", 0, 0);
+	REQUIRE(ret == 0);
+
+	ret = rd->searchEntry("/somaeere.txt", 0, 0);
+	REQUIRE(ret == 1);
+
+	ret = rd->searchEntry("/somrere.txt", 0, 0);
+	REQUIRE(ret == 2);
+
+	ret = rd->searchEntry("/somefile.txt", 0, 0);
+	REQUIRE(ret == 3);
+
+	ret = rd->searchEntry("/soasssadile.txt", 0, 0);
+	REQUIRE(ret == -(ENOENT));
+
+	ret = rd->searchEntry("/somrrgaeere.txt", 0, 0);
+	REQUIRE(ret == -(ENOENT));
 }
