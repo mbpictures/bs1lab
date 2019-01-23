@@ -4,7 +4,10 @@ obj
 *.mp3
 *.pdf
 *.txt
+*.webm
+*.zip
 mkfs.myfs
 mount.myfs
+unittest
 .project
 .cproject

@@ -1,8 +1,8 @@
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "Superblock.h"
+#include "helper.hpp"
 
-TEST_CASE("Wird der naechste freie Block gefunden?", "[findFreeBlock]") 
+TEST_CASE("Wird der naechste freie Block gefunden?", "[findFreeBlock]")
 {
 	int ret;
 	bool *DMap = (bool*) malloc(DMAP_SIZE);
@@ -27,7 +27,7 @@ TEST_CASE("Wird der nachfolgende Block gefunden?", "[findNextBlock]")
 	int ret;
 	bool *DMap = (bool*) malloc(DMAP_SIZE);
 	uint16_t *FAT = (uint16_t*) malloc(FAT_SIZE);
-	memset(FAT, -1, FAT_SIZE);
+	memset(FAT, 0, FAT_SIZE);
 	FAT[5] = 7;
 	Superblock *sb = new Superblock(DMap, FAT);
 
@@ -43,13 +43,13 @@ TEST_CASE("Wird der nachfolgende Block richtig gesetzt?", "[setNextBlock]")
 	int ret;
 	bool *DMap = (bool*) malloc(DMAP_SIZE);
 	uint16_t *FAT = (uint16_t*) malloc(FAT_SIZE);
-	memset(FAT, -1, FAT_SIZE);
+	memset(FAT, 0, FAT_SIZE);
 	Superblock *sb = new Superblock(DMap, FAT);
 
 	sb->setNextBlock(5,8);
 	REQUIRE(sb->findNextBlock(5) == 8);
 
-	sb->setNextBlock(5, -1);
+	sb->setNextBlock(5, 0);
 	REQUIRE(sb->findNextBlock(5) == 0);
 
 	sb->setNextBlock(0, 3);
@@ -68,17 +68,17 @@ TEST_CASE("Wird ein bestimmter Block in der DMap richtig gesetzt?", "[markBlock]
 	REQUIRE(sb->findFreeBlock() == 9);
 
 	sb->markBlock(5, true);
-	REQUIRE(sb->findNextBlock() == 5);
+	REQUIRE(sb->findFreeBlock() == 5);
 
 	sb->markBlock(5, false);
-	REQUIRE(sb->findNextBlock() == 9);
+	REQUIRE(sb->findFreeBlock() == 9);
 }
 
 TEST_CASE("Wir das SB richtig serialisiert und deserialisiert?", "[serialize/deserialize]")
 {
 	bool *dmap = (bool*) malloc(DMAP_SIZE);
 	memset(dmap, 1, DMAP_SIZE);
-	uint16_t *fat = (uint16_t*) malloc(FAT_SIZE);
+	uint16_t *fat = (uint16_t*) malloc(sizeof(uint16_t) * FAT_SIZE);
 	memset(fat, 0, FAT_SIZE);
 
 	dmap[0] = 0;
@@ -92,22 +92,22 @@ TEST_CASE("Wir das SB richtig serialisiert und deserialisiert?", "[serialize/des
 	fat[2] = 222;
 	fat[3] = 2;
 
-	Superblock *sp = new Superblock(dmap, fat);
-	char* buffer = (char*)malloc(DMAP_SIZE + FAT_SIZE);
-	sp->serialize(buffer);
+	Superblock *sb = new Superblock(dmap, fat);
+	char* buffer = (char*)malloc(DMAP_SIZE + sizeof(uint16_t) * FAT_SIZE);
+	sb->serialize(buffer);
 
-	sp->DMap[0] = 0;
-	sp->DMap[1] = 0;
-	sp->DMap[2] = 0;
-	sp->DMap[3] = 1;
-	sp->DMap[4] = 0;
+	sb->DMap[0] = 0;
+	sb->DMap[1] = 0;
+	sb->DMap[2] = 0;
+	sb->DMap[3] = 1;
+	sb->DMap[4] = 0;
 
-	sp->FAT[0] = 1;
-	sp->FAT[1] = 1;
-	sp->FAT[3] = 1;
-	sp->FAT[2] = 1;
+	sb->FAT[0] = 1;
+	sb->FAT[1] = 1;
+	sb->FAT[3] = 1;
+	sb->FAT[2] = 1;
 
-	sp->deserialize(buffer);
+	sb->deserialize(buffer);
 
 	REQUIRE(sb->findFreeBlock() == 5);
 	REQUIRE(sb->findNextBlock(2) == 222);

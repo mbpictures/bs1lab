@@ -21,7 +21,7 @@ LINKFLAGS = -g -Wall
 LIBS = `pkg-config fuse --libs`
 
 # all targets in project TODO: add new targets here (and add objects and link target)
-TARGETS = mount.myfs mkfs.myfs
+TARGETS = mount.myfs mkfs.myfs unittest
 
 # object files for target mkfs.myfs TODO: add new object files here
 MKFS_MYFS_OBJS = $(OBJDIR)/blockdevice.o \
@@ -73,12 +73,15 @@ TSRCDIR = unittests
 
 # object files for target unittests TODO: add new object files here
 UNITTEST_OBJS = $(OBJDIR)/main.o \
+	$(OBJDIR)/Superblock.o \
 	$(OBJDIR)/blockdevice.o \
-	$(OBJDIR)/test-blockdevice.o \
+	$(OBJDIR)/RootDirectory.o \
+	$(OBJDIR)/test-rootdirectory.o \
+	$(OBJDIR)/test-superblock.o \
 	$(OBJDIR)/myfs.o \
 	$(OBJDIR)/test-myfs.o \
-	$(OBJDIR)/helper.o \
-	$(OBJDIR)/test-superblock.o
+	$(OBJDIR)/helper.o 
+	
 
 # test targets
 TTARGETS = unittests
