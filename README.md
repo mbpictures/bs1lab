@@ -1,4 +1,8 @@
 # bs1lab
+## Info
+This fs was developed as a university project. Doc in German, Comments in English.
+
+
 Das Repository dient der gemeinsamen Nutzung und Weiterentwicklung eines eigenen Filesystems (MyFS).
 Ein Laufwerk wird mittels "Image" (in der BlockDevice-Klasse) simuliert. [Anleitung zur Installation](#installation-und-testen)
 
